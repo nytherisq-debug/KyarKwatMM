@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomId": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['player1', 'status'])",
+        "player1": {
+          ".validate": "newData.isString() && newData.val().length <= 30"
+        },
+        "player2": {
+          ".validate": "newData.isString() && newData.val().length <= 30 || newData.val() === null"
+        },
+        "status": {
+          ".validate": "newData.val() === 'waiting' || newData.val() === 'playing' || newData.val() === 'finished'"
+        },
+        "gameState": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    }
+  }
+}

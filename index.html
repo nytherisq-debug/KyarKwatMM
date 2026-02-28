@@ -5,985 +5,582 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>မြန်မာ ကျားကွက် | Multiplayer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@300;400;600;700&family=Cinzel+Decorative:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@300;400;600;700&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
 
 <style>
-/* ═══════════════════════════════════════
-   ROOT VARIABLES & RESET
-═══════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   ROOT & RESET
+══════════════════════════════════════════════ */
 :root {
-  --gold:       #D4A843;
-  --gold-l:     #F0CC72;
-  --gold-d:     #8A6410;
-  --gold-glow:  rgba(212,168,67,0.35);
-  --ruby:       #9B1C1C;
-  --ruby-l:     #D63031;
-  --emerald:    #1B5E20;
-  --emerald-l:  #2E7D32;
-  --ink:        #0D0600;
-  --ink2:       #1A0D00;
-  --ink3:       #261300;
-  --ink4:       #321A00;
-  --wood:       #4A2200;
-  --wood-l:     #6B3300;
-  --board-d:    #3D1C00;
-  --board-l:    #C49A55;
-  --cream:      #F5E6C8;
-  --cream2:     #EDD9A3;
-  --cream3:     #D4B878;
-  --text:       #F0DDB0;
-  --text-dim:   #A08040;
-  --white-p:    #F2E8D5;
-  --black-p:    #1A0800;
-  --sel-glow:   rgba(255,220,50,0.7);
-  --move-glow:  rgba(80,220,100,0.65);
-  --cap-glow:   rgba(255,60,60,0.65);
-  --shadow:     rgba(0,0,0,0.8);
-
-  --cell: 58px;
-  --board-size: calc(var(--cell) * 8);
+  --gold:      #D4A843;
+  --gold-l:    #F0CC72;
+  --gold-d:    #8A6410;
+  --gold-glow: rgba(212,168,67,0.35);
+  --ruby:      #9B1C1C;
+  --ruby-l:    #D63031;
+  --green:     #2E7D32;
+  --green-l:   #43A047;
+  --ink:       #0D0600;
+  --ink2:      #1A0D00;
+  --ink3:      #261300;
+  --board-d:   #3D1C00;
+  --board-l:   #C49A55;
+  --cream:     #F5E6C8;
+  --cream2:    #EDD9A3;
+  --cream3:    #D4B878;
+  --text-dim:  #A08040;
+  --cell:      56px;
 }
 
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
 
-html, body {
+html,body {
   width:100%; min-height:100vh;
-  background: var(--ink);
-  font-family: 'Noto Sans Myanmar', sans-serif;
-  color: var(--text);
-  overflow-x: hidden;
+  background:var(--ink);
+  font-family:'Noto Sans Myanmar',sans-serif;
+  color:var(--cream);
+  overflow-x:hidden;
 }
 
-/* Animated background */
 body::before {
-  content:'';
-  position:fixed; inset:0; z-index:0;
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, #3D1A00 0%, transparent 70%),
-    radial-gradient(ellipse 60% 40% at 20% 80%, #1A0A00 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 80% 90%, #200800 0%, transparent 60%);
-  animation: bgShift 12s ease-in-out infinite alternate;
+    radial-gradient(ellipse 80% 60% at 50% 0%,#3D1A00 0%,transparent 70%),
+    radial-gradient(ellipse 50% 50% at 80% 90%,#200800 0%,transparent 60%);
+  animation:bgShift 14s ease-in-out infinite alternate;
 }
-
-@keyframes bgShift {
-  from { opacity:1; }
-  to   { opacity:0.7; filter:hue-rotate(15deg); }
-}
-
-/* Diamond pattern overlay */
 body::after {
-  content:'';
-  position:fixed; inset:0; z-index:0; pointer-events:none;
-  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0L40 20L20 40L0 20Z' fill='none' stroke='%23D4A843' stroke-width='0.3' stroke-opacity='0.06'/%3E%3C/svg%3E");
-  background-size: 40px 40px;
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0L40 20L20 40L0 20Z' fill='none' stroke='%23D4A843' stroke-width='0.3' stroke-opacity='0.05'/%3E%3C/svg%3E");
+  background-size:40px 40px;
 }
+@keyframes bgShift { from{opacity:1} to{opacity:0.7;filter:hue-rotate(10deg)} }
 
-/* ═══════════════════════════════════════
-   LOBBY SCREEN
-═══════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   LOBBY
+══════════════════════════════════════════════ */
 #lobby {
   position:fixed; inset:0; z-index:200;
   display:flex; align-items:center; justify-content:center;
-  background: linear-gradient(160deg, #1A0800 0%, #0D0400 50%, #1A0800 100%);
-  transition: opacity 0.6s, visibility 0.6s;
+  background:linear-gradient(160deg,#1A0800,#0D0400 50%,#1A0800);
+  transition:opacity 0.5s,visibility 0.5s;
 }
-
-#lobby.hidden { opacity:0; visibility:hidden; }
+#lobby.hidden { opacity:0; visibility:hidden; pointer-events:none; }
 
 .lobby-box {
   position:relative; z-index:1;
-  background: linear-gradient(145deg, #261300, #1A0800);
+  background:linear-gradient(145deg,#261300,#1A0800);
   border:1px solid var(--gold-d);
-  border-radius:20px;
-  padding:50px 60px;
-  width:460px;
-  max-width:95vw;
-  box-shadow:
-    0 0 60px rgba(212,168,67,0.12),
-    0 30px 80px rgba(0,0,0,0.9),
-    inset 0 1px 0 rgba(212,168,67,0.15);
-  animation: lobbyIn 0.8s cubic-bezier(0.16,1,0.3,1);
+  border-radius:20px; padding:44px 56px;
+  width:460px; max-width:95vw;
+  box-shadow:0 0 60px rgba(212,168,67,0.1),0 30px 80px rgba(0,0,0,0.9),inset 0 1px 0 rgba(212,168,67,0.12);
+  animation:fadeUp 0.8s cubic-bezier(0.16,1,0.3,1);
 }
+@keyframes fadeUp { from{opacity:0;transform:translateY(40px) scale(0.95)} to{opacity:1;transform:none} }
 
-@keyframes lobbyIn {
-  from { opacity:0; transform:translateY(40px) scale(0.95); }
-  to   { opacity:1; transform:translateY(0) scale(1); }
-}
-
-.lobby-ornament {
-  text-align:center;
-  font-size:2.5rem;
-  margin-bottom:6px;
-  filter:drop-shadow(0 0 12px var(--gold-glow));
-}
-
+.lobby-ornament { text-align:center; font-size:2.2rem; margin-bottom:6px; filter:drop-shadow(0 0 12px var(--gold-glow)); }
 .lobby-title {
-  font-family:'Cinzel Decorative', cursive;
-  font-size:1.6rem;
-  font-weight:900;
-  color:var(--gold);
-  text-align:center;
-  text-shadow:0 0 30px var(--gold-glow), 0 2px 4px rgba(0,0,0,0.8);
-  letter-spacing:3px;
-  margin-bottom:4px;
+  font-family:'Cinzel Decorative',cursive; font-size:1.6rem; font-weight:900;
+  color:var(--gold); text-align:center;
+  text-shadow:0 0 30px var(--gold-glow),0 2px 4px rgba(0,0,0,0.8);
+  letter-spacing:3px; margin-bottom:4px;
 }
+.lobby-sub { font-size:0.95rem; color:var(--gold-l); text-align:center; opacity:0.8; margin-bottom:4px; }
+.lobby-div { height:1px; background:linear-gradient(90deg,transparent,var(--gold-d),transparent); margin:18px 0; }
+.lobby-lbl { font-size:0.78rem; color:var(--text-dim); margin-bottom:6px; letter-spacing:1px; }
 
-.lobby-subtitle {
-  font-size:1rem;
-  color:var(--gold-l);
-  text-align:center;
-  margin-bottom:6px;
-  opacity:0.8;
+.lobby-inp {
+  width:100%; padding:11px 15px;
+  background:rgba(0,0,0,0.4); border:1px solid var(--gold-d); border-radius:10px;
+  color:var(--cream); font-family:'Noto Sans Myanmar',sans-serif; font-size:0.92rem;
+  margin-bottom:14px; outline:none; transition:border-color 0.2s,box-shadow 0.2s;
 }
+.lobby-inp:focus { border-color:var(--gold); box-shadow:0 0 12px rgba(212,168,67,0.15); }
 
-.lobby-divider {
-  height:1px;
-  background:linear-gradient(90deg,transparent,var(--gold-d),transparent);
-  margin:20px 0;
-}
-
-.lobby-label {
-  font-size:0.8rem;
-  color:var(--text-dim);
-  margin-bottom:6px;
-  letter-spacing:1px;
-}
-
-.lobby-input {
-  width:100%;
-  padding:12px 16px;
-  background:rgba(0,0,0,0.4);
-  border:1px solid var(--gold-d);
-  border-radius:10px;
-  color:var(--cream);
-  font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:0.95rem;
-  margin-bottom:16px;
-  transition:border-color 0.2s, box-shadow 0.2s;
-  outline:none;
-}
-
-.lobby-input:focus {
-  border-color:var(--gold);
-  box-shadow:0 0 12px rgba(212,168,67,0.2);
-}
-
-.lobby-btns { display:flex; gap:12px; }
+.btn-row { display:flex; gap:10px; margin-bottom:4px; }
+.btn-join-row { display:flex; gap:8px; margin-bottom:14px; }
+.btn-join-row .lobby-inp { margin-bottom:0; flex:1; }
 
 .btn-primary {
-  flex:1; padding:14px;
-  background:linear-gradient(135deg, var(--gold-d), var(--gold));
+  flex:1; padding:13px;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
   border:none; border-radius:10px;
   color:var(--ink); font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:0.95rem; font-weight:700; cursor:pointer;
+  font-size:0.9rem; font-weight:700; cursor:pointer;
   transition:all 0.2s; position:relative; overflow:hidden;
 }
-
-.btn-primary::after {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);
-  border-radius:10px;
-}
-
-.btn-primary:hover {
-  transform:translateY(-2px);
-  box-shadow:0 6px 20px var(--gold-glow);
-}
-
-.btn-primary:active { transform:translateY(0); }
+.btn-primary::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent); }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 20px var(--gold-glow); }
+.btn-primary:active { transform:none; }
 
 .btn-secondary {
-  flex:1; padding:14px;
-  background:transparent;
-  border:1px solid var(--gold-d); border-radius:10px;
-  color:var(--gold); font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:0.95rem; cursor:pointer;
-  transition:all 0.2s;
+  padding:11px 20px;
+  background:transparent; border:1px solid var(--gold-d); border-radius:10px;
+  color:var(--gold); font-family:'Noto Sans Myanmar',sans-serif; font-size:0.9rem;
+  cursor:pointer; transition:all 0.2s; white-space:nowrap;
 }
+.btn-secondary:hover { background:rgba(212,168,67,0.08); border-color:var(--gold); }
 
-.btn-secondary:hover {
-  background:rgba(212,168,67,0.08);
-  border-color:var(--gold);
-}
-
-.lobby-or {
-  text-align:center;
-  color:var(--text-dim);
-  font-size:0.8rem;
-  margin:4px 0;
-  position:relative;
-}
-
-.room-input-row { display:flex; gap:8px; margin-bottom:16px; }
-
-.room-input-row .lobby-input { margin-bottom:0; flex:1; }
-
+.lobby-or { text-align:center; color:var(--text-dim); font-size:0.78rem; margin:6px 0; }
 .lobby-status {
-  text-align:center;
-  font-size:0.82rem;
-  color:var(--gold-l);
-  margin-top:16px;
-  min-height:24px;
-  padding:8px;
-  background:rgba(0,0,0,0.3);
-  border-radius:8px;
+  text-align:center; font-size:0.8rem; color:var(--gold-l);
+  margin-top:14px; padding:8px; background:rgba(0,0,0,0.3); border-radius:8px; min-height:34px;
 }
 
-/* ═══════════════════════════════════════
-   WAITING SCREEN
-═══════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   WAITING
+══════════════════════════════════════════════ */
 #waiting {
   position:fixed; inset:0; z-index:190;
   display:flex; align-items:center; justify-content:center;
-  background:rgba(13,6,0,0.95);
-  backdrop-filter:blur(8px);
-  transition:opacity 0.4s, visibility 0.4s;
+  background:rgba(13,6,0,0.95); backdrop-filter:blur(8px);
+  transition:opacity 0.4s,visibility 0.4s;
 }
-
 #waiting.hidden { opacity:0; visibility:hidden; pointer-events:none; }
 
-.waiting-box {
-  text-align:center;
-  animation:lobbyIn 0.5s ease;
+.wait-box { text-align:center; animation:fadeUp 0.5s ease; }
+.wait-spinner {
+  width:72px; height:72px; border:3px solid var(--gold-d); border-top-color:var(--gold);
+  border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 20px;
 }
-
-.waiting-spinner {
-  width:80px; height:80px;
-  border:3px solid var(--gold-d);
-  border-top-color:var(--gold);
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-  margin:0 auto 20px;
+@keyframes spin { to{transform:rotate(360deg)} }
+.wait-code-label { font-size:0.85rem; color:var(--cream2); margin-bottom:8px; }
+.wait-code {
+  font-family:'Cinzel Decorative',cursive; font-size:2.8rem; color:var(--gold);
+  letter-spacing:10px; text-shadow:0 0 20px var(--gold-glow); margin:10px 0;
 }
-
-@keyframes spin { to { transform:rotate(360deg); } }
-
-.waiting-room-id {
-  font-family:'Cinzel Decorative',cursive;
-  font-size:2.5rem;
-  color:var(--gold);
-  letter-spacing:8px;
-  text-shadow:0 0 20px var(--gold-glow);
-  margin:12px 0;
-}
-
-.waiting-text { color:var(--cream2); font-size:0.9rem; margin-bottom:8px; }
-.waiting-hint { color:var(--text-dim); font-size:0.8rem; }
-
+.wait-hint { color:var(--text-dim); font-size:0.78rem; margin-top:10px; }
 .btn-cancel {
-  margin-top:20px; padding:10px 24px;
-  background:rgba(155,28,28,0.3);
-  border:1px solid var(--ruby); border-radius:8px;
-  color:#E57373; font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:0.85rem; cursor:pointer; transition:all 0.2s;
+  margin-top:20px; padding:9px 22px;
+  background:rgba(155,28,28,0.3); border:1px solid var(--ruby); border-radius:8px;
+  color:#E57373; font-family:'Noto Sans Myanmar',sans-serif; font-size:0.82rem;
+  cursor:pointer; transition:all 0.2s;
 }
 .btn-cancel:hover { background:rgba(155,28,28,0.5); }
 
-/* ═══════════════════════════════════════
+/* ══════════════════════════════════════════════
    GAME SCREEN
-═══════════════════════════════════════ */
+══════════════════════════════════════════════ */
 #game-screen {
   position:relative; z-index:10;
-  display:flex; flex-direction:column;
-  min-height:100vh; padding:16px;
-  transition:opacity 0.5s;
+  display:flex; flex-direction:column; min-height:100vh; padding:12px 14px;
 }
-
-#game-screen.hidden { opacity:0; pointer-events:none; }
+#game-screen.hidden { display:none; }
 
 /* Top bar */
 .top-bar {
   display:flex; align-items:center; justify-content:space-between;
-  padding:10px 20px;
-  background:linear-gradient(90deg, rgba(26,13,0,0.9), rgba(38,19,0,0.9));
-  border:1px solid var(--gold-d);
-  border-radius:14px;
-  margin-bottom:14px;
-  backdrop-filter:blur(10px);
-  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  padding:9px 18px;
+  background:linear-gradient(90deg,rgba(26,13,0,0.92),rgba(38,19,0,0.92));
+  border:1px solid var(--gold-d); border-radius:12px; margin-bottom:12px;
+  backdrop-filter:blur(10px); box-shadow:0 4px 20px rgba(0,0,0,0.5);
 }
-
 .top-logo {
-  font-family:'Cinzel Decorative',cursive;
-  font-size:1.1rem;
-  color:var(--gold);
-  text-shadow:0 0 12px var(--gold-glow);
-  letter-spacing:2px;
+  font-family:'Cinzel Decorative',cursive; font-size:1rem; color:var(--gold);
+  text-shadow:0 0 10px var(--gold-glow); letter-spacing:2px;
 }
-
-.top-logo span { font-size:0.7rem; color:var(--text-dim); display:block; letter-spacing:1px; }
-
+.top-logo small { display:block; font-size:0.62rem; color:var(--text-dim); letter-spacing:1px; font-family:'Noto Sans Myanmar',sans-serif; }
 .room-badge {
-  display:flex; align-items:center; gap:8px;
-  background:rgba(0,0,0,0.4);
-  border:1px solid var(--gold-d);
-  border-radius:8px;
-  padding:6px 14px;
-  font-size:0.8rem; color:var(--cream2);
+  display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.4);
+  border:1px solid var(--gold-d); border-radius:8px; padding:5px 12px;
+  font-size:0.78rem; color:var(--cream2);
 }
-
 .room-badge strong { color:var(--gold); font-family:'Cinzel Decorative',cursive; letter-spacing:2px; }
-
-.top-status {
-  display:flex; align-items:center; gap:6px;
-  font-size:0.78rem;
+.top-conn { display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--cream2); }
+.conn-dot {
+  width:8px; height:8px; border-radius:50%; background:#81C784;
+  animation:pulse 2s infinite;
 }
+.conn-dot.off { background:#E57373; animation:none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
-.status-dot {
-  width:8px; height:8px; border-radius:50%;
-  background:var(--gold);
-  animation:statusPulse 2s infinite;
-}
-
-.status-dot.offline { background:#E57373; animation:none; }
-.status-dot.waiting { background:#FFB74D; }
-.status-dot.playing { background:#81C784; }
-
-@keyframes statusPulse {
-  0%,100% { opacity:1; box-shadow:0 0 0 0 currentColor; }
-  50% { opacity:0.6; box-shadow:0 0 0 4px transparent; }
-}
-
-/* ═══════════════════════════════════════
-   MAIN LAYOUT
-═══════════════════════════════════════ */
+/* Main layout */
 .main-layout {
-  display:flex; gap:14px; flex:1;
+  display:flex; gap:12px; flex:1;
   align-items:flex-start; justify-content:center;
 }
 
-/* ═══════════════════════════════════════
-   PLAYER PANELS
-═══════════════════════════════════════ */
-.player-panel {
-  width:190px; flex-shrink:0;
-  display:flex; flex-direction:column; gap:10px;
-}
+/* ══════════════════════════════════════════════
+   SIDE PANELS
+══════════════════════════════════════════════ */
+.side-panel { width:185px; flex-shrink:0; display:flex; flex-direction:column; gap:9px; }
 
-.player-card {
-  background:linear-gradient(145deg, rgba(38,19,0,0.9), rgba(26,13,0,0.9));
-  border:1px solid var(--gold-d);
-  border-radius:14px;
-  padding:14px;
-  position:relative; overflow:hidden;
-  transition:border-color 0.3s, box-shadow 0.3s;
+.p-card {
+  background:linear-gradient(145deg,rgba(38,19,0,0.92),rgba(26,13,0,0.92));
+  border:1px solid var(--gold-d); border-radius:13px; padding:13px;
+  position:relative; overflow:hidden; transition:border-color 0.3s,box-shadow 0.3s;
 }
-
-.player-card::before {
-  content:''; position:absolute;
-  top:0; left:0; right:0; height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold-d),transparent);
-  transition:background 0.3s;
+.p-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold-d),transparent); transition:background 0.3s;
 }
-
-.player-card.active {
-  border-color:var(--gold);
-  box-shadow:0 0 20px rgba(212,168,67,0.15), 0 0 40px rgba(212,168,67,0.08);
-}
-
-.player-card.active::before {
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-}
-
-.player-card.is-me { border-color:var(--emerald-l); }
-.player-card.is-me::before { background:linear-gradient(90deg,transparent,var(--emerald-l),transparent); }
-.player-card.is-me.active { border-color:var(--gold); box-shadow:0 0 20px rgba(212,168,67,0.2); }
+.p-card.active { border-color:var(--gold); box-shadow:0 0 18px rgba(212,168,67,0.12); }
+.p-card.active::before { background:linear-gradient(90deg,transparent,var(--gold),transparent); }
 
 .p-avatar {
-  width:44px; height:44px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.3rem; margin-bottom:8px;
-  border:2px solid var(--gold-d);
-  box-shadow:0 2px 8px rgba(0,0,0,0.5);
+  width:40px; height:40px; border-radius:50%; border:2px solid var(--gold-d);
+  display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+  margin-bottom:8px; box-shadow:0 2px 6px rgba(0,0,0,0.5);
 }
+.p-avatar.av-b { background:radial-gradient(circle at 35% 30%,#333,#0D0600); }
+.p-avatar.av-w { background:radial-gradient(circle at 35% 30%,#fff8e8,#C8A870); }
 
-.p-avatar.black-av { background:radial-gradient(circle at 35%30%,#333,#0D0600); }
-.p-avatar.white-av { background:radial-gradient(circle at 35%30%,#fff8e8,#C8A870); }
+.p-name { font-size:0.85rem; font-weight:600; color:var(--cream); margin-bottom:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.p-role { font-size:0.68rem; color:var(--text-dim); margin-bottom:8px; }
+.p-dots { display:flex; flex-wrap:wrap; gap:3px; min-height:18px; }
 
-.p-name {
-  font-size:0.88rem; font-weight:600;
-  color:var(--cream); margin-bottom:2px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-
-.p-role { font-size:0.7rem; color:var(--text-dim); margin-bottom:8px; }
-
-.p-pieces {
-  display:flex; flex-wrap:wrap; gap:3px; margin-bottom:8px;
-}
-
-.mini-pc {
-  width:14px; height:14px; border-radius:50%;
-  border:1px solid rgba(255,255,255,0.2);
+.mini-dot {
+  width:13px; height:13px; border-radius:50%; border:1px solid rgba(255,255,255,0.2);
   transition:opacity 0.3s;
 }
+.mini-dot.b { background:radial-gradient(circle at 35% 30%,#555,#111); }
+.mini-dot.w { background:radial-gradient(circle at 35% 30%,#fff,#c8a870); }
+.mini-dot.dead { opacity:0.12; }
 
-.mini-pc.b { background:radial-gradient(circle at 35%30%,#444,#111); }
-.mini-pc.w { background:radial-gradient(circle at 35%30%,#fff,#c8a870); }
-.mini-pc.lost { opacity:0.15; }
-
-.p-timer {
-  font-family:'Cinzel Decorative',cursive;
-  font-size:1.3rem; color:var(--gold);
-  text-align:center;
-  text-shadow:0 0 8px var(--gold-glow);
-}
-
-.p-timer.danger { color:#E57373; animation:dangerPulse 0.8s infinite; }
-
-@keyframes dangerPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
-/* Info cards */
+/* Info / action cards */
 .info-card {
-  background:linear-gradient(145deg,rgba(38,19,0,0.9),rgba(26,13,0,0.9));
-  border:1px solid var(--gold-d);
-  border-radius:14px;
-  padding:12px 14px;
+  background:linear-gradient(145deg,rgba(38,19,0,0.92),rgba(26,13,0,0.92));
+  border:1px solid var(--gold-d); border-radius:13px; padding:11px 13px;
 }
+.info-card h4 { font-size:0.72rem; color:var(--gold); letter-spacing:1px; margin-bottom:7px; }
 
-.info-card h4 {
-  font-size:0.75rem; color:var(--gold);
-  letter-spacing:1px; margin-bottom:8px;
-  display:flex; align-items:center; gap:6px;
+.turn-card { text-align:center; padding:8px; }
+.turn-label { font-size:0.82rem; color:var(--cream2); margin-bottom:4px; }
+.turn-who { font-size:0.95rem; font-weight:700; color:var(--gold); }
+
+/* Turn timer display inside turn card */
+.timer-display {
+  font-family:'Cinzel Decorative',cursive;
+  font-size:1.5rem; color:var(--gold); margin-top:6px;
+  text-shadow:0 0 8px var(--gold-glow);
+  transition:color 0.3s;
 }
+.timer-display.danger { color:#E57373; animation:dangerBlink 0.7s infinite; }
+@keyframes dangerBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-.turn-display {
-  text-align:center; padding:10px;
-  font-size:0.85rem; color:var(--cream2);
+.huff-notice {
+  background:rgba(155,28,28,0.15); border:1px solid rgba(155,28,28,0.4);
+  border-radius:8px; padding:8px; font-size:0.75rem; color:#E57373; text-align:center;
+  display:none;
 }
-
-.turn-name {
-  font-size:1rem; font-weight:700;
-  color:var(--gold); margin-top:4px;
-}
-
-.captured-display { display:flex; flex-wrap:wrap; gap:3px; }
-
-/* Action buttons */
-.action-btns { display:flex; flex-direction:column; gap:8px; }
+.huff-notice.show { display:block; animation:fadeUp 0.3s ease; }
 
 .btn-huff {
-  width:100%; padding:10px;
-  background:linear-gradient(135deg,rgba(155,28,28,0.8),rgba(214,48,49,0.8));
-  border:1px solid #E57373; border-radius:10px;
-  color:#fff; font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:0.85rem; cursor:pointer;
+  width:100%; padding:9px; margin-bottom:6px;
+  background:linear-gradient(135deg,rgba(155,28,28,0.85),rgba(214,48,49,0.85));
+  border:1px solid #E57373; border-radius:9px; color:#fff;
+  font-family:'Noto Sans Myanmar',sans-serif; font-size:0.82rem; cursor:pointer;
   transition:all 0.2s; display:none;
-  animation:huffAppear 0.3s ease;
 }
-
-@keyframes huffAppear {
-  from { opacity:0; transform:scale(0.9); }
-  to   { opacity:1; transform:scale(1); }
-}
-
-.btn-huff.show { display:block; }
-.btn-huff:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(214,48,49,0.4); }
+.btn-huff.show { display:block; animation:fadeUp 0.3s ease; }
+.btn-huff:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(214,48,49,0.35); }
 
 .btn-resign {
-  width:100%; padding:9px;
-  background:transparent;
-  border:1px solid rgba(155,28,28,0.4); border-radius:10px;
-  color:rgba(229,115,115,0.6); font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:0.78rem; cursor:pointer; transition:all 0.2s;
+  width:100%; padding:8px; background:transparent;
+  border:1px solid rgba(155,28,28,0.35); border-radius:9px;
+  color:rgba(229,115,115,0.55); font-family:'Noto Sans Myanmar',sans-serif;
+  font-size:0.75rem; cursor:pointer; transition:all 0.2s;
 }
-
 .btn-resign:hover { border-color:var(--ruby); color:#E57373; }
 
-/* ═══════════════════════════════════════
+/* Log */
+.log-list {
+  list-style:none; max-height:190px; overflow-y:auto;
+  scrollbar-width:thin; scrollbar-color:var(--gold-d) transparent;
+}
+.log-list::-webkit-scrollbar { width:3px; }
+.log-list::-webkit-scrollbar-thumb { background:var(--gold-d); }
+.log-list li {
+  font-size:0.7rem; color:var(--cream3); padding:3px 0;
+  border-bottom:1px solid rgba(212,168,67,0.06); opacity:0.9;
+  animation:slideIn 0.25s ease;
+}
+.log-list li:first-child { color:var(--gold-l); font-weight:600; }
+@keyframes slideIn { from{opacity:0;transform:translateX(-6px)} to{opacity:0.9;transform:none} }
+
+.cap-row { display:flex; flex-wrap:wrap; gap:3px; min-height:16px; }
+
+/* ══════════════════════════════════════════════
    BOARD CENTER
-═══════════════════════════════════════ */
-.board-center { flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:10px; }
+══════════════════════════════════════════════ */
+.board-center {
+  flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:10px;
+}
 
 .board-frame {
-  background:linear-gradient(145deg, #5C2A00, #3D1800);
-  border:3px solid var(--gold);
-  border-radius:12px;
-  padding:18px;
+  background:linear-gradient(145deg,#5C2A00,#3D1800);
+  border:3px solid var(--gold); border-radius:12px; padding:16px;
   position:relative;
   box-shadow:
     0 0 0 1px var(--gold-d),
-    0 0 40px rgba(212,168,67,0.15),
+    0 0 40px rgba(212,168,67,0.12),
     0 20px 60px rgba(0,0,0,0.9),
     inset 0 0 30px rgba(0,0,0,0.4);
 }
-
-/* Corner ornaments */
 .bd-corner {
-  position:absolute; width:22px; height:22px;
-  color:var(--gold); font-size:14px;
-  display:flex; align-items:center; justify-content:center;
-  opacity:0.8;
+  position:absolute; width:20px; height:20px; color:var(--gold);
+  font-size:13px; display:flex; align-items:center; justify-content:center; opacity:0.8;
 }
-.bd-corner.tl { top:5px; left:5px; }
-.bd-corner.tr { top:5px; right:5px; }
-.bd-corner.bl { bottom:5px; left:5px; }
-.bd-corner.br { bottom:5px; right:5px; }
+.bd-corner.tl{top:4px;left:4px} .bd-corner.tr{top:4px;right:4px}
+.bd-corner.bl{bottom:4px;left:4px} .bd-corner.br{bottom:4px;right:4px}
 
-/* Side labels */
-.bd-side {
-  position:absolute;
-  display:flex;
+/* Coord labels */
+.board-wrap { display:flex; flex-direction:column; }
+.board-cols { display:flex; padding-left:18px; }
+.board-cols span {
+  width:var(--cell); text-align:center; font-size:0.58rem;
+  color:var(--text-dim); font-family:'Cinzel Decorative',cursive; opacity:0.7;
 }
-
-.bd-labels-top, .bd-labels-bottom {
-  position:absolute;
-  left:18px; right:18px;
-  display:flex;
+.board-main { display:flex; }
+.board-rows { display:flex; flex-direction:column; }
+.board-rows span {
+  height:var(--cell); display:flex; align-items:center; justify-content:center;
+  width:18px; font-size:0.58rem; color:var(--text-dim); opacity:0.7;
 }
 
-.bd-labels-top { top:4px; }
-.bd-labels-bottom { bottom:4px; }
-
-.bd-labels-left, .bd-labels-right {
-  position:absolute;
-  top:18px; bottom:18px;
-  display:flex; flex-direction:column;
-}
-
-.bd-labels-left { left:5px; }
-.bd-labels-right { right:5px; }
-
-.bd-label {
-  display:flex; align-items:center; justify-content:center;
-  color:var(--gold-d); font-size:0.6rem; opacity:0.7;
-  font-family:'Cinzel Decorative',cursive;
-}
-
-.bd-labels-top .bd-label,
-.bd-labels-bottom .bd-label { flex:1; }
-
-.bd-labels-left .bd-label,
-.bd-labels-right .bd-label { flex:1; }
-
-/* The board grid */
 #board {
   display:grid;
   grid-template-columns:repeat(8,var(--cell));
   grid-template-rows:repeat(8,var(--cell));
   border:2px solid var(--gold-d);
-  box-shadow:0 0 20px rgba(0,0,0,0.6), inset 0 0 10px rgba(0,0,0,0.3);
-  position:relative;
+  box-shadow:0 0 20px rgba(0,0,0,0.6),inset 0 0 8px rgba(0,0,0,0.3);
 }
 
 .cell {
   width:var(--cell); height:var(--cell);
   display:flex; align-items:center; justify-content:center;
-  position:relative; cursor:pointer;
-  transition:filter 0.15s;
+  position:relative; cursor:pointer; transition:filter 0.12s;
+}
+.cell.light  { background:var(--board-l); }
+.cell.dark   { background:var(--board-d); }
+.cell.dark:hover:not(.no-hover) { filter:brightness(1.25); }
+
+/* Highlights */
+.cell.sel-cell   { background:rgba(212,168,67,0.5) !important; }
+.cell.move-cell  { background:rgba(60,200,80,0.38) !important; }
+.cell.cap-cell   { background:rgba(220,50,50,0.42) !important; }
+.cell.from-cell::after,
+.cell.to-cell::after {
+  content:''; position:absolute; inset:3px;
+  border:1px solid rgba(212,168,67,0.35); border-radius:2px; pointer-events:none;
 }
 
-.cell.light { background:var(--board-l); }
-.cell.dark  { background:var(--board-d); }
-
-.cell.dark:hover:not(.cell-disabled) { filter:brightness(1.3); }
-
-.cell.selected-cell { background:rgba(212,168,67,0.5) !important; }
-.cell.move-cell     { background:rgba(60,200,80,0.4) !important; }
-.cell.capture-cell  { background:rgba(220,50,50,0.45) !important; }
-
-/* Move indicator dots */
+/* Move dots */
 .move-dot {
-  width:18px; height:18px; border-radius:50%;
-  background:rgba(80,220,100,0.8);
-  border:2px solid rgba(100,255,120,0.9);
-  box-shadow:0 0 8px rgba(80,220,100,0.6);
+  width:17px; height:17px; border-radius:50%;
+  background:rgba(80,220,100,0.8); border:2px solid rgba(100,255,120,0.9);
+  box-shadow:0 0 8px rgba(80,220,100,0.6); pointer-events:none;
   animation:dotAnim 1.2s ease-in-out infinite;
-  pointer-events:none;
 }
-
 .cap-dot {
-  width:18px; height:18px; border-radius:50%;
-  background:rgba(220,50,50,0.85);
-  border:2px solid rgba(255,80,80,0.9);
-  box-shadow:0 0 8px rgba(220,50,50,0.6);
+  width:17px; height:17px; border-radius:50%;
+  background:rgba(220,50,50,0.85); border:2px solid rgba(255,80,80,0.9);
+  box-shadow:0 0 8px rgba(220,50,50,0.6); pointer-events:none;
   animation:dotAnim 0.8s ease-in-out infinite;
-  pointer-events:none;
 }
-
-@keyframes dotAnim {
-  0%,100% { transform:scale(0.85); opacity:0.7; }
-  50%      { transform:scale(1.15); opacity:1; }
-}
+@keyframes dotAnim { 0%,100%{transform:scale(0.85);opacity:0.7} 50%{transform:scale(1.15);opacity:1} }
 
 /* Pieces */
 .piece {
-  width:calc(var(--cell) - 12px);
-  height:calc(var(--cell) - 12px);
-  border-radius:50%;
-  position:relative;
-  transition:transform 0.15s, box-shadow 0.15s;
-  cursor:pointer; z-index:2;
+  width:calc(var(--cell) - 10px); height:calc(var(--cell) - 10px);
+  border-radius:50%; position:relative;
+  transition:transform 0.13s,box-shadow 0.13s; cursor:pointer; z-index:2;
 }
-
-.piece:hover { transform:scale(1.06); }
+.piece:hover { transform:scale(1.07); }
 
 .piece.white-p {
-  background:
-    radial-gradient(circle at 32% 28%, #FFFDF5 0%, #EDD5A3 35%, #C8953E 70%, #9A6A20 100%);
+  background:radial-gradient(circle at 32% 28%,#FFFDF5 0%,#EDD5A3 35%,#C8953E 70%,#9A6A20 100%);
   border:2px solid #B07820;
-  box-shadow:
-    0 4px 10px rgba(0,0,0,0.6),
-    inset 0 -3px 6px rgba(0,0,0,0.25),
-    inset 0 3px 6px rgba(255,255,255,0.7);
+  box-shadow:0 4px 10px rgba(0,0,0,0.6),inset 0 -3px 6px rgba(0,0,0,0.25),inset 0 3px 6px rgba(255,255,255,0.7);
 }
-
 .piece.black-p {
-  background:
-    radial-gradient(circle at 32% 28%, #4A3020 0%, #1E0E04 40%, #080300 100%);
+  background:radial-gradient(circle at 32% 28%,#4A3020 0%,#1E0E04 40%,#080300 100%);
   border:2px solid #3A2010;
-  box-shadow:
-    0 4px 10px rgba(0,0,0,0.8),
-    inset 0 -3px 6px rgba(0,0,0,0.6),
-    inset 0 3px 6px rgba(255,255,255,0.12);
+  box-shadow:0 4px 10px rgba(0,0,0,0.8),inset 0 -3px 6px rgba(0,0,0,0.6),inset 0 3px 6px rgba(255,255,255,0.1);
 }
-
 .piece.king-p::after {
-  content:'♛';
-  position:absolute; top:50%; left:50%;
+  content:'♛'; position:absolute; top:50%; left:50%;
   transform:translate(-50%,-50%);
-  font-size:calc(var(--cell) * 0.35);
-  color:var(--gold);
-  text-shadow:0 0 8px var(--gold-glow), 0 1px 3px rgba(0,0,0,0.8);
+  font-size:calc(var(--cell)*0.33); color:var(--gold);
+  text-shadow:0 0 8px var(--gold-glow),0 1px 3px rgba(0,0,0,0.8);
   line-height:1; pointer-events:none;
 }
-
-.piece.selected-p {
-  box-shadow:
-    0 4px 10px rgba(0,0,0,0.6),
-    0 0 0 3px var(--gold),
-    0 0 20px var(--sel-glow);
-  animation:selectedAnim 1s ease-in-out infinite;
+.piece.sel-p {
+  animation:selGlow 0.9s ease-in-out infinite;
+}
+@keyframes selGlow {
+  0%,100%{box-shadow:0 4px 10px rgba(0,0,0,0.6),0 0 0 3px var(--gold),0 0 18px rgba(212,168,67,0.5)}
+  50%    {box-shadow:0 4px 10px rgba(0,0,0,0.6),0 0 0 3px var(--gold-l),0 0 28px rgba(212,168,67,0.8)}
 }
 
-@keyframes selectedAnim {
-  0%,100% { box-shadow:0 4px 10px rgba(0,0,0,0.6),0 0 0 3px var(--gold),0 0 20px rgba(212,168,67,0.5); }
-  50%      { box-shadow:0 4px 10px rgba(0,0,0,0.6),0 0 0 3px var(--gold-l),0 0 30px rgba(212,168,67,0.8); }
+/* Huff target highlight */
+.piece.huff-target-p {
+  animation:huffGlow 0.6s ease-in-out infinite;
+  outline:3px solid #E57373;
+}
+@keyframes huffGlow {
+  0%,100%{box-shadow:0 0 0 0 rgba(229,115,115,0.6)}
+  50%    {box-shadow:0 0 16px 6px rgba(229,115,115,0.4)}
 }
 
-/* Last move highlight */
-.cell.last-from::after,
-.cell.last-to::after {
-  content:'';
-  position:absolute; inset:3px;
-  border:2px solid rgba(212,168,67,0.4);
-  border-radius:2px; pointer-events:none;
-}
-
-/* ═══════════════════════════════════════
-   BOTTOM CHAT AREA
-═══════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   CHAT
+══════════════════════════════════════════════ */
 .chat-area {
   background:linear-gradient(145deg,rgba(26,13,0,0.95),rgba(20,10,0,0.95));
-  border:1px solid var(--gold-d);
-  border-radius:14px;
-  overflow:hidden;
-  width:100%;
-  max-width:calc(var(--cell)*8 + 36px);
-  backdrop-filter:blur(10px);
+  border:1px solid var(--gold-d); border-radius:13px; overflow:hidden;
+  width:100%; max-width:calc(var(--cell)*8 + 36px);
 }
-
 .chat-header {
-  display:flex; align-items:center; gap:8px;
-  padding:10px 14px;
-  background:rgba(0,0,0,0.3);
-  border-bottom:1px solid var(--gold-d);
+  display:flex; align-items:center; gap:8px; padding:9px 13px;
+  background:rgba(0,0,0,0.3); border-bottom:1px solid var(--gold-d);
 }
-
-.chat-header h4 {
-  font-size:0.78rem; color:var(--gold);
-  letter-spacing:1px; flex:1;
-}
-
-.online-count {
-  font-size:0.7rem; color:var(--emerald-l);
+.chat-header h4 { font-size:0.75rem; color:var(--gold); letter-spacing:1px; flex:1; }
+.online-pill {
+  font-size:0.68rem; color:var(--green-l);
   display:flex; align-items:center; gap:4px;
 }
-
-.online-count::before {
-  content:''; width:6px; height:6px; border-radius:50%;
-  background:var(--emerald-l);
-  animation:statusPulse 2s infinite;
+.online-pill::before {
+  content:''; width:5px; height:5px; border-radius:50%; background:var(--green-l); animation:pulse 2s infinite;
 }
-
 .chat-msgs {
-  height:100px;
-  overflow-y:auto;
-  padding:10px 14px;
-  display:flex; flex-direction:column; gap:5px;
-  scrollbar-width:thin;
-  scrollbar-color:var(--gold-d) transparent;
+  height:96px; overflow-y:auto; padding:8px 13px;
+  display:flex; flex-direction:column; gap:4px;
+  scrollbar-width:thin; scrollbar-color:var(--gold-d) transparent;
 }
+.chat-msgs::-webkit-scrollbar{width:3px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--gold-d)}
 
-.chat-msgs::-webkit-scrollbar { width:4px; }
-.chat-msgs::-webkit-scrollbar-thumb { background:var(--gold-d); border-radius:2px; }
-
-.chat-msg {
-  display:flex; gap:8px; align-items:flex-start;
-  animation:msgIn 0.2s ease;
-}
-
-@keyframes msgIn {
-  from { opacity:0; transform:translateY(8px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-
+.chat-msg { display:flex; gap:6px; align-items:flex-start; animation:msgIn 0.18s ease; }
+@keyframes msgIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 .chat-msg.own { flex-direction:row-reverse; }
 
-.chat-bubble {
-  max-width:70%; padding:6px 10px;
-  border-radius:10px;
-  font-size:0.78rem; line-height:1.4;
+.chat-bub {
+  max-width:72%; padding:5px 9px; border-radius:9px;
+  font-size:0.76rem; line-height:1.4;
 }
-
-.chat-msg.other .chat-bubble {
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.1);
-  color:var(--cream2);
-  border-radius:2px 10px 10px 10px;
+.chat-msg.other .chat-bub {
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.09);
+  color:var(--cream2); border-radius:2px 9px 9px 9px;
 }
-
-.chat-msg.own .chat-bubble {
-  background:rgba(212,168,67,0.12);
-  border:1px solid rgba(212,168,67,0.2);
-  color:var(--gold-l);
-  border-radius:10px 2px 10px 10px;
+.chat-msg.own .chat-bub {
+  background:rgba(212,168,67,0.1); border:1px solid rgba(212,168,67,0.18);
+  color:var(--gold-l); border-radius:9px 2px 9px 9px;
 }
-
-.chat-msg.system .chat-bubble {
-  background:rgba(27,94,32,0.2);
-  border:1px solid rgba(46,125,50,0.3);
-  color:#81C784;
-  font-style:italic; font-size:0.72rem;
-  border-radius:10px;
+.chat-msg.sys .chat-bub {
+  background:rgba(27,94,32,0.18); border:1px solid rgba(46,125,50,0.25);
+  color:#81C784; font-style:italic; font-size:0.7rem; border-radius:9px;
 }
+.chat-msg.sys { justify-content:center; }
+.chat-sender { font-size:0.62rem; color:var(--text-dim); margin-bottom:2px; }
 
-.chat-msg.system { justify-content:center; }
-
-.chat-sender {
-  font-size:0.65rem; color:var(--text-dim);
-  margin-bottom:2px;
+.emoji-row {
+  display:flex; gap:5px; padding:5px 13px;
+  border-top:1px solid rgba(212,168,67,0.07);
 }
+.emoji-btn {
+  padding:3px 7px; font-size:0.95rem;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+  border-radius:6px; cursor:pointer; transition:all 0.13s;
+}
+.emoji-btn:hover { background:rgba(255,255,255,0.1); transform:scale(1.1); }
 
 .chat-input-row {
-  display:flex; gap:8px;
-  padding:10px 14px;
-  border-top:1px solid rgba(212,168,67,0.1);
+  display:flex; gap:7px; padding:8px 13px;
+  border-top:1px solid rgba(212,168,67,0.09);
 }
-
-.chat-input {
-  flex:1; padding:8px 12px;
-  background:rgba(0,0,0,0.4);
+.chat-inp {
+  flex:1; padding:7px 11px; background:rgba(0,0,0,0.4);
   border:1px solid var(--gold-d); border-radius:8px;
   color:var(--cream); font-family:'Noto Sans Myanmar',sans-serif;
-  font-size:0.82rem; outline:none;
-  transition:border-color 0.2s;
+  font-size:0.8rem; outline:none; transition:border-color 0.2s;
 }
-
-.chat-input:focus { border-color:var(--gold); }
-
+.chat-inp:focus { border-color:var(--gold); }
 .chat-send {
-  padding:8px 16px;
+  padding:7px 14px;
   background:linear-gradient(135deg,var(--gold-d),var(--gold));
-  border:none; border-radius:8px;
-  color:var(--ink); font-size:0.9rem; cursor:pointer;
-  transition:all 0.2s; font-weight:bold;
+  border:none; border-radius:8px; color:var(--ink);
+  font-size:0.88rem; font-weight:bold; cursor:pointer; transition:all 0.2s;
 }
+.chat-send:hover { transform:scale(1.06); }
 
-.chat-send:hover { transform:scale(1.05); }
-
-/* Quick emoji buttons */
-.emoji-row {
-  display:flex; gap:6px;
-  padding:6px 14px;
-  border-top:1px solid rgba(212,168,67,0.08);
-}
-
-.emoji-btn {
-  padding:4px 8px; font-size:1rem;
-  background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:6px; cursor:pointer;
-  transition:all 0.15s;
-}
-
-.emoji-btn:hover { background:rgba(255,255,255,0.12); transform:scale(1.1); }
-
-/* ═══════════════════════════════════════
-   RIGHT PANEL
-═══════════════════════════════════════ */
-.right-panel {
-  width:190px; flex-shrink:0;
-  display:flex; flex-direction:column; gap:10px;
-}
-
-/* Move log */
-.log-card {
-  background:linear-gradient(145deg,rgba(38,19,0,0.9),rgba(26,13,0,0.9));
-  border:1px solid var(--gold-d);
-  border-radius:14px;
-  padding:12px 14px;
-  flex:1;
-}
-
-.log-card h4 {
-  font-size:0.75rem; color:var(--gold);
-  letter-spacing:1px; margin-bottom:8px;
-}
-
-.log-list {
-  list-style:none; max-height:200px;
-  overflow-y:auto;
-  scrollbar-width:thin;
-  scrollbar-color:var(--gold-d) transparent;
-}
-
-.log-list::-webkit-scrollbar { width:3px; }
-.log-list::-webkit-scrollbar-thumb { background:var(--gold-d); }
-
-.log-list li {
-  font-size:0.72rem; color:var(--cream3);
-  padding:3px 0;
-  border-bottom:1px solid rgba(212,168,67,0.06);
-  opacity:0.9;
-  animation:logIn 0.3s ease;
-}
-
-@keyframes logIn {
-  from { opacity:0; transform:translateX(-6px); }
-  to   { opacity:0.9; transform:translateX(0); }
-}
-
-.log-list li:first-child { color:var(--gold-l); font-weight:600; }
-
-/* Captured pieces display */
-.captured-section {
-  background:linear-gradient(145deg,rgba(38,19,0,0.9),rgba(26,13,0,0.9));
-  border:1px solid var(--gold-d);
-  border-radius:14px;
-  padding:12px 14px;
-}
-
-.captured-section h4 {
-  font-size:0.75rem; color:var(--gold);
-  letter-spacing:1px; margin-bottom:8px;
-}
-
-.captured-row { display:flex; flex-wrap:wrap; gap:3px; min-height:20px; }
-
-/* ═══════════════════════════════════════
-   WIN / GAME OVER OVERLAY
-═══════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   WIN OVERLAY
+══════════════════════════════════════════════ */
 #win-overlay {
   position:fixed; inset:0; z-index:500;
   display:flex; align-items:center; justify-content:center;
-  background:rgba(0,0,0,0); backdrop-filter:blur(0px);
+  background:rgba(0,0,0,0); backdrop-filter:blur(0);
   transition:all 0.5s; pointer-events:none; visibility:hidden;
 }
-
 #win-overlay.show {
-  background:rgba(0,0,0,0.85);
-  backdrop-filter:blur(8px);
+  background:rgba(0,0,0,0.88); backdrop-filter:blur(8px);
   pointer-events:all; visibility:visible;
 }
-
 .win-box {
   background:linear-gradient(145deg,#261300,#1A0800);
-  border:2px solid var(--gold);
-  border-radius:20px;
-  padding:50px 70px;
+  border:2px solid var(--gold); border-radius:18px; padding:48px 64px;
   text-align:center;
   transform:scale(0.7) translateY(30px);
   transition:transform 0.5s cubic-bezier(0.16,1,0.3,1);
-  box-shadow:0 0 80px rgba(212,168,67,0.2), 0 40px 100px rgba(0,0,0,0.9);
+  box-shadow:0 0 80px rgba(212,168,67,0.18),0 40px 100px rgba(0,0,0,0.9);
 }
-
-#win-overlay.show .win-box {
-  transform:scale(1) translateY(0);
-}
-
-.win-icon { font-size:4rem; margin-bottom:16px; filter:drop-shadow(0 0 20px var(--gold-glow)); }
-
+#win-overlay.show .win-box { transform:scale(1) translateY(0); }
+.win-icon { font-size:3.6rem; margin-bottom:14px; filter:drop-shadow(0 0 20px var(--gold-glow)); }
 .win-title {
-  font-family:'Cinzel Decorative',cursive;
-  font-size:1.8rem; color:var(--gold);
-  text-shadow:0 0 30px var(--gold-glow);
-  margin-bottom:10px;
+  font-family:'Cinzel Decorative',cursive; font-size:1.7rem; color:var(--gold);
+  text-shadow:0 0 28px var(--gold-glow); margin-bottom:9px;
 }
+.win-msg { font-size:0.95rem; color:var(--cream2); margin-bottom:26px; }
 
-.win-msg { font-size:1rem; color:var(--cream2); margin-bottom:28px; }
-
-.win-btns { display:flex; gap:12px; justify-content:center; }
-
-/* Notification toast */
+/* Toast */
 .toast {
-  position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px);
-  background:linear-gradient(135deg,#261300,#1A0800);
-  border:1px solid var(--gold);
-  border-radius:10px; padding:12px 24px;
-  font-size:0.9rem; color:var(--cream);
-  z-index:400; transition:transform 0.3s ease;
-  box-shadow:0 4px 20px rgba(0,0,0,0.7);
+  position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-80px);
+  background:linear-gradient(135deg,#261300,#1A0800); border:1px solid var(--gold);
+  border-radius:10px; padding:11px 22px; font-size:0.88rem; color:var(--cream);
+  z-index:400; transition:transform 0.28s ease; box-shadow:0 4px 20px rgba(0,0,0,0.7);
+  pointer-events:none;
 }
-
 .toast.show { transform:translateX(-50%) translateY(0); }
 
-/* Animated move arrow */
-@keyframes pieceMove {
-  from { opacity:0; transform:scale(0.5); }
-  to   { opacity:1; transform:scale(1); }
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════ */
+@media(max-width:920px){
+  :root{--cell:46px}
+  .side-panel{width:155px}
+  .main-layout{gap:9px}
 }
-
-.piece.just-moved { animation:pieceMove 0.3s ease; }
-
-/* Connection lost banner */
-.conn-banner {
-  position:fixed; bottom:0; left:0; right:0; z-index:300;
-  background:rgba(155,28,28,0.95); color:#fff;
-  text-align:center; padding:10px;
-  font-size:0.85rem; transform:translateY(100%);
-  transition:transform 0.3s;
-}
-
-.conn-banner.show { transform:translateY(0); }
-
-/* Responsive */
-@media (max-width:900px) {
-  :root { --cell:46px; }
-  .player-panel, .right-panel { width:150px; }
-  .main-layout { gap:10px; }
-}
-
-@media (max-width:700px) {
-  :root { --cell:38px; }
-  .player-panel, .right-panel { display:none; }
-  .main-layout { flex-direction:column; align-items:center; }
-  .board-center { width:100%; align-items:center; }
+@media(max-width:720px){
+  :root{--cell:40px}
+  .side-panel,.right-panel{display:none}
+  .main-layout{flex-direction:column;align-items:center}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══ LOBBY ═══ -->
+<!-- ══ LOBBY ══ -->
 <div id="lobby">
   <div class="lobby-box">
     <div class="lobby-ornament">🎭</div>
     <div class="lobby-title">KYAR KWAT</div>
-    <div class="lobby-subtitle">မြန်မာ ကျားကွက် · Online Multiplayer</div>
-    <div class="lobby-divider"></div>
+    <div class="lobby-sub">မြန်မာ ကျားကွက် · Online Multiplayer</div>
+    <div class="lobby-div"></div>
 
-    <div class="lobby-label">👤 သင့်အမည်</div>
-    <input class="lobby-input" id="player-name" type="text" placeholder="အမည်ထည့်ပါ..." maxlength="20">
+    <div class="lobby-lbl">👤 သင့်အမည်</div>
+    <input class="lobby-inp" id="inp-name" type="text" placeholder="အမည်ထည့်ပါ..." maxlength="20">
 
-    <div class="lobby-btns">
+    <div class="btn-row">
       <button class="btn-primary" onclick="createRoom()">🏠 Room ဖန်တီး</button>
     </div>
 
-    <div class="lobby-or">─── သို့မဟုတ် ───</div>
+    <div class="lobby-or">── သို့မဟုတ် ──</div>
 
-    <div class="lobby-label">🔑 Room Code ဖြင့် ဝင်ပါ</div>
-    <div class="room-input-row">
-      <input class="lobby-input" id="room-code-input" type="text" placeholder="Room Code..." maxlength="6" style="text-transform:uppercase; letter-spacing:3px;">
+    <div class="lobby-lbl">🔑 Room Code ဖြင့် ဝင်ပါ</div>
+    <div class="btn-join-row">
+      <input class="lobby-inp" id="inp-code" type="text" placeholder="CODE..." maxlength="6"
+             style="text-transform:uppercase;letter-spacing:3px">
       <button class="btn-secondary" onclick="joinRoom()">ဝင်မည်</button>
     </div>
 
@@ -991,506 +588,293 @@ body::after {
   </div>
 </div>
 
-<!-- ═══ WAITING ═══ -->
+<!-- ══ WAITING ══ -->
 <div id="waiting" class="hidden">
-  <div class="waiting-box">
-    <div class="waiting-spinner"></div>
-    <div class="waiting-text">Room Code</div>
-    <div class="waiting-room-id" id="w-room-id">----</div>
-    <div class="waiting-text">ဤ Code ကို သူငယ်ချင်းကို ပို့ပါ</div>
-    <div class="waiting-hint" style="margin-top:8px; color:var(--gold-d); font-size:0.75rem;">ပြိုင်ဘက်ကို စောင့်နေသည်...</div>
+  <div class="wait-box">
+    <div class="wait-spinner"></div>
+    <div class="wait-code-label">Room Code</div>
+    <div class="wait-code" id="w-code">------</div>
+    <div class="wait-code-label">ဤ Code ကို သူငယ်ချင်းထံ ပို့ပါ</div>
+    <div class="wait-hint">ပြိုင်ဘက် Join ရန် စောင့်နေသည်...</div>
     <button class="btn-cancel" onclick="cancelRoom()">ဖျက်သိမ်းမည်</button>
   </div>
 </div>
 
-<!-- ═══ GAME SCREEN ═══ -->
+<!-- ══ GAME ══ -->
 <div id="game-screen" class="hidden">
-  <!-- Top Bar -->
   <div class="top-bar">
-    <div class="top-logo">
-      🎭 KYAR KWAT
-      <span>မြန်မာ ကျားကွက်</span>
-    </div>
-    <div class="room-badge">
-      Room: <strong id="top-room-id">----</strong>
-    </div>
-    <div class="top-status">
-      <div class="status-dot playing" id="conn-dot"></div>
-      <span id="conn-text">Online</span>
-    </div>
+    <div class="top-logo">🎭 KYAR KWAT <small>မြန်မာ ကျားကွက်</small></div>
+    <div class="room-badge">Room: <strong id="top-room">----</strong></div>
+    <div class="top-conn"><div class="conn-dot" id="conn-dot"></div><span id="conn-text">Online</span></div>
   </div>
 
-  <!-- Main Layout -->
   <div class="main-layout">
 
-    <!-- Left Panel: My Player -->
-    <div class="player-panel" id="left-panel">
-      <div class="player-card" id="my-card">
-        <div class="p-avatar" id="my-avatar">⬛</div>
+    <!-- Left: My panel -->
+    <div class="side-panel" id="left-panel">
+      <div class="p-card" id="my-card">
+        <div class="p-avatar av-b" id="my-avatar">⬛</div>
         <div class="p-name" id="my-name">-</div>
         <div class="p-role" id="my-role">-</div>
-        <div class="p-pieces" id="my-pieces-dots"></div>
+        <div class="p-dots" id="my-dots"></div>
       </div>
 
       <div class="info-card">
-        <h4>📋 ကြည့်ရှုရန်</h4>
-        <div class="turn-display">
-          <div id="turn-text">-</div>
-          <div class="turn-name" id="turn-name-display">-</div>
+        <h4>⏱ အလှည့်</h4>
+        <div class="turn-card">
+          <div class="turn-label" id="turn-label">-</div>
+          <div class="turn-who" id="turn-who">-</div>
+          <div class="timer-display" id="timer-disp">30</div>
         </div>
       </div>
 
-      <div class="action-btns">
-        <button class="btn-huff" id="huff-btn" onclick="huffAction()">💨 Huff လုပ်မည်</button>
-        <button class="btn-resign" onclick="resignGame()">🏳️ ဆုံးနိုင်ခြင်း</button>
+      <div class="info-card">
+        <div class="huff-notice" id="huff-notice">
+          ⚠️ ပြိုင်ဘက်က ဖမ်းမစားခဲ့ပါ!<br>Huff လုပ်ချင်ပါသလား?
+        </div>
+        <button class="btn-huff" id="huff-btn" onclick="doHuff()">💨 Huff - ကျောက်ဖယ်ရှားမည်</button>
+        <button class="btn-resign" onclick="doResign()">🏳️ ဆုံးနိုင်ခြင်း</button>
       </div>
 
       <div class="info-card">
-        <h4>💀 ဖမ်းမိသော駒</h4>
-        <div class="captured-row" id="i-captured"></div>
+        <h4>💀 ကိုယ်ဖမ်းမိသောကျောက်</h4>
+        <div class="cap-row" id="my-cap"></div>
       </div>
     </div>
 
-    <!-- Board Center -->
+    <!-- Center: Board + Chat -->
     <div class="board-center">
       <div class="board-frame">
         <span class="bd-corner tl">✦</span>
         <span class="bd-corner tr">✦</span>
         <span class="bd-corner bl">✦</span>
         <span class="bd-corner br">✦</span>
-        <div id="board"></div>
+        <div class="board-wrap">
+          <div class="board-cols" id="col-labels"></div>
+          <div class="board-main">
+            <div class="board-rows" id="row-labels"></div>
+            <div id="board"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Chat -->
       <div class="chat-area">
         <div class="chat-header">
           <h4>💬 Chat</h4>
-          <div class="online-count" id="online-count">2 Online</div>
+          <div class="online-pill" id="online-pill">2 Online</div>
         </div>
         <div class="chat-msgs" id="chat-msgs"></div>
         <div class="emoji-row">
-          <button class="emoji-btn" onclick="sendQuick('👏')">👏</button>
-          <button class="emoji-btn" onclick="sendQuick('😄')">😄</button>
-          <button class="emoji-btn" onclick="sendQuick('🤔')">🤔</button>
-          <button class="emoji-btn" onclick="sendQuick('😅')">😅</button>
-          <button class="emoji-btn" onclick="sendQuick('🔥')">🔥</button>
-          <button class="emoji-btn" onclick="sendQuick('🙏')">🙏</button>
-          <button class="emoji-btn" onclick="sendQuick('Good game!')">GG</button>
+          <button class="emoji-btn" onclick="quickMsg('👏')">👏</button>
+          <button class="emoji-btn" onclick="quickMsg('😄')">😄</button>
+          <button class="emoji-btn" onclick="quickMsg('🤔')">🤔</button>
+          <button class="emoji-btn" onclick="quickMsg('😅')">😅</button>
+          <button class="emoji-btn" onclick="quickMsg('🔥')">🔥</button>
+          <button class="emoji-btn" onclick="quickMsg('🙏')">🙏</button>
+          <button class="emoji-btn" onclick="quickMsg('Good game!')">GG</button>
         </div>
         <div class="chat-input-row">
-          <input class="chat-input" id="chat-input" type="text" placeholder="Message ရေးပါ..." maxlength="100"
-                 onkeydown="if(event.key==='Enter') sendChat()">
-          <button class="chat-send" onclick="sendChat()">↑</button>
+          <input class="chat-inp" id="chat-inp" type="text" placeholder="Message ရေးပါ..." maxlength="100"
+                 onkeydown="if(event.key==='Enter')doSendChat()">
+          <button class="chat-send" onclick="doSendChat()">↑</button>
         </div>
       </div>
     </div>
 
-    <!-- Right Panel: Opponent -->
-    <div class="right-panel" id="right-panel">
-      <div class="player-card" id="opp-card">
-        <div class="p-avatar" id="opp-avatar">⬜</div>
-        <div class="p-name" id="opp-name">สารสรา...</div>
+    <!-- Right: Opponent panel -->
+    <div class="side-panel" id="right-panel">
+      <div class="p-card" id="opp-card">
+        <div class="p-avatar av-w" id="opp-avatar">⬜</div>
+        <div class="p-name" id="opp-name">ပြိုင်ဘက်...</div>
         <div class="p-role" id="opp-role">-</div>
-        <div class="p-pieces" id="opp-pieces-dots"></div>
+        <div class="p-dots" id="opp-dots"></div>
       </div>
 
-      <div class="log-card">
+      <div class="info-card">
         <h4>📜 မှတ်တမ်း</h4>
         <ul class="log-list" id="log-list"></ul>
       </div>
 
-      <div class="captured-section">
-        <h4>💀 ဖမ်းမိသော駒</h4>
-        <div class="captured-row" id="opp-captured"></div>
+      <div class="info-card">
+        <h4>💀 ပြိုင်ဘက်ဖမ်းမိသောကျောက်</h4>
+        <div class="cap-row" id="opp-cap"></div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Win Overlay -->
+  </div><!-- /main-layout -->
+</div><!-- /game-screen -->
+
+<!-- Win overlay -->
 <div id="win-overlay">
   <div class="win-box">
-    <div class="win-icon" id="win-icon">🏆</div>
-    <div class="win-title" id="win-title">အနိုင်ရ!</div>
-    <div class="win-msg" id="win-msg"></div>
-    <div class="win-btns">
-      <button class="btn-primary" onclick="leaveGame()" style="width:160px;">🚪 ထွက်မည်</button>
-    </div>
+    <div class="win-icon" id="w-icon">🏆</div>
+    <div class="win-title" id="w-title">-</div>
+    <div class="win-msg"  id="w-msg">-</div>
+    <button class="btn-primary" style="padding:13px 32px;width:auto" onclick="doLeave()">🚪 Lobby သို့ ပြန်သွားမည်</button>
   </div>
 </div>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- Connection Banner -->
-<div class="conn-banner" id="conn-banner">⚠️ ချိတ်ဆက်မှု ပြတ်တောက်သွားသည်</div>
-
-<!-- Firebase -->
+<!-- Firebase (module) -->
 <script type="module">
-import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, onValue,
-         push, remove, update, off, onDisconnect }from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+         push, remove, update, off, onDisconnect }     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC-LM-rRPfgxIlYH9fpuZwUkSCCOPidg5g",
-  authDomain: "kyarkwat-57298.firebaseapp.com",
-  databaseURL: "https://kyarkwat-57298-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "kyarkwat-57298",
-  storageBucket: "kyarkwat-57298.firebasestorage.app",
-  messagingSenderId: "143473069573",
-  appId: "1:143473069573:web:127d6c9320195f10afd66c",
-  measurementId: "G-J0XHCRTFJ1"
+const cfg = {
+  apiKey:"AIzaSyC-LM-rRPfgxIlYH9fpuZwUkSCCOPidg5g",
+  authDomain:"kyarkwat-57298.firebaseapp.com",
+  databaseURL:"https://kyarkwat-57298-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"kyarkwat-57298",
+  storageBucket:"kyarkwat-57298.firebasestorage.app",
+  messagingSenderId:"143473069573",
+  appId:"1:143473069573:web:127d6c9320195f10afd66c",
+  measurementId:"G-J0XHCRTFJ1"
 };
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(cfg);
 const db  = getDatabase(app);
-
-// Expose to global game logic
-window.FB = { db, ref, set, get, onValue, push, remove, update, off, onDisconnect };
+window._FB = { db, ref, set, get, onValue, push, remove, update, off, onDisconnect };
 window.dispatchEvent(new Event('fbReady'));
 </script>
 
 <script>
-/* ═══════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════
    CONSTANTS
-═══════════════════════════════════════════════════════ */
-const EMPTY=0, BLACK=1, WHITE=2, BLACK_KING=3, WHITE_KING=4;
-const isBlack = p => p===BLACK||p===BLACK_KING;
-const isWhite = p => p===WHITE||p===WHITE_KING;
-const isKing  = p => p===BLACK_KING||p===WHITE_KING;
+════════════════════════════════════════════════════ */
+const EMPTY=0, BLACK=1, WHITE=2, BK=3, WK=4;
+
+const isBlack = p => p===BLACK||p===BK;
+const isWhite = p => p===WHITE||p===WK;
+const isKing  = p => p===BK||p===WK;
 const isOwn   = (p,t) => t===BLACK ? isBlack(p) : isWhite(p);
 const isOpp   = (p,t) => t===BLACK ? isWhite(p) : isBlack(p);
 
-/* ═══════════════════════════════════════════════════════
-   GAME STATE
-═══════════════════════════════════════════════════════ */
-let board=[], currentTurn=BLACK, selectedCell=null, legalMoves=[];
-let gameOver=false, gameLog=[], huffTarget=null, huffAvailable=false;
-let myCaptured=[], oppCaptured=[], lastFrom=null, lastTo=null;
+/* ════════════════════════════════════════════════════
+   GAME STATE  (authoritative – never mutated by remote blindly)
+════════════════════════════════════════════════════ */
+let board = [];
+let currentTurn = BLACK;
+let selCell = null;
+let legalMoves = [];
+let gameOver = false;
+let gameLog = [];
 
-/* ═══════════════════════════════════════════════════════
+// Counts pieces captured BY each colour (used for display)
+// capturedBy[BLACK] = list of WHITE pieces that Black took
+// capturedBy[WHITE] = list of BLACK pieces that White took
+let capturedBy = { [BLACK]:[], [WHITE]:[] };
+
+let lastFrom = null, lastTo = null;
+
+/* ════════════════════════════════════════════════════
    MULTIPLAYER STATE
-═══════════════════════════════════════════════════════ */
-let myName='', myColor=null, roomId='', isHost=false;
-let fbReady=false, gameRef=null, chatRef=null;
-let unsubGame=null, unsubChat=null;
-let chatLastSeen=0;
+════════════════════════════════════════════════════ */
+let myName = '', myColor = null, roomId = '', isHost = false;
+let fbReady = false;
+let unsub = null, unsubChat = null;
 
-/* ═══════════════════════════════════════════════════════
+// Version counter – we only apply remote state if it's newer than ours
+let localVersion = 0;
+
+// Huff state
+// After opponent makes a NORMAL move when they HAD captures available:
+//   huffPending = true, huffPiece = {r,c} of piece that skipped
+let huffPending = false;
+let huffPiecePos = null;
+
+// Turn timer
+let timerInterval = null;
+let timerSeconds = 30;
+
+/* ════════════════════════════════════════════════════
    FIREBASE READY
-═══════════════════════════════════════════════════════ */
+════════════════════════════════════════════════════ */
 window.addEventListener('fbReady', () => {
   fbReady = true;
   setLobbyStatus('🟢 ချိတ်ဆက်မှု အောင်မြင်သည်');
 });
 
-/* ═══════════════════════════════════════════════════════
-   ROOM MANAGEMENT
-═══════════════════════════════════════════════════════ */
-function genRoomId() {
-  return Math.random().toString(36).substring(2,8).toUpperCase();
+/* ════════════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════════════ */
+function FB(){ return window._FB; }
+
+function setLobbyStatus(t){ document.getElementById('lobby-status').textContent=t; }
+
+let _toastTimer=null;
+function toast(t){
+  const el=document.getElementById('toast');
+  el.textContent=t; el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>el.classList.remove('show'),2400);
 }
 
-window.createRoom = async function() {
-  if (!fbReady) { setLobbyStatus('⏳ Firebase ချိတ်ဆက်နေသည်...'); return; }
-  myName = document.getElementById('player-name').value.trim() || 'ကစားသမား ①';
-  roomId = genRoomId();
-  isHost = true;
-  myColor = BLACK;
-
-  const { db,ref,set,onDisconnect:od } = window.FB;
-  const r = ref(db, `rooms/${roomId}`);
-  gameRef = r;
-
-  // Init room data
-  const initBoard = buildInitBoard();
-  await set(r, {
-    host: { name: myName, color: BLACK, online: true },
-    guest: null,
-    state: {
-      board: initBoard,
-      turn: BLACK,
-      gameOver: false,
-      huffTarget: null
-    },
-    chat: null,
-    status: 'waiting',
-    created: Date.now()
-  });
-
-  // Auto-remove on disconnect
-  od(r).remove();
-
-  showWaiting(roomId);
-  listenRoom();
-};
-
-window.joinRoom = async function() {
-  if (!fbReady) { setLobbyStatus('⏳ Firebase ချိတ်ဆက်နေသည်...'); return; }
-  myName = document.getElementById('player-name').value.trim() || 'ကစားသမား ②';
-  const code = document.getElementById('room-code-input').value.trim().toUpperCase();
-  if (code.length < 4) { setLobbyStatus('⚠️ Room Code ထည့်ပါ'); return; }
-  roomId = code;
-  isHost = false;
-  myColor = WHITE;
-
-  const { db,ref,get,set,update } = window.FB;
-  const r = ref(db, `rooms/${roomId}`);
-  gameRef = r;
-
-  const snap = await get(r);
-  if (!snap.exists()) { setLobbyStatus('❌ Room မတွေ့ပါ'); return; }
-  const data = snap.val();
-  if (data.status !== 'waiting') { setLobbyStatus('❌ Room ပြည့်နေသည်'); return; }
-
-  // Join as guest
-  await update(ref(db, `rooms/${roomId}`), {
-    guest: { name: myName, color: WHITE, online: true },
-    status: 'playing'
-  });
-
-  loadGameFromState(data.state);
-  showGame();
-  listenRoom();
-  listenChat();
-};
-
-window.cancelRoom = function() {
-  if (gameRef) {
-    const { db,ref,remove } = window.FB;
-    remove(ref(window.FB.db, `rooms/${roomId}`));
-  }
-  document.getElementById('waiting').classList.add('hidden');
-  document.getElementById('lobby').classList.remove('hidden');
-};
-
-/* ═══════════════════════════════════════════════════════
-   FIREBASE LISTENERS
-═══════════════════════════════════════════════════════ */
-function listenRoom() {
-  const { db, ref, onValue } = window.FB;
-  const r = ref(db, `rooms/${roomId}`);
-  unsubGame = onValue(r, snap => {
-    if (!snap.exists()) {
-      if (!gameOver) { showToast('⚠️ Room ပျက်သွားသည်'); leaveGame(); }
-      return;
-    }
-    const data = snap.val();
-
-    // Guest joined → host starts game
-    if (isHost && data.status === 'playing' && document.getElementById('waiting') && !document.getElementById('waiting').classList.contains('hidden')) {
-      loadGameFromState(data.state);
-      showGame();
-      listenChat();
-      sendSystemChat(`🎮 ${data.guest?.name || 'ပြိုင်ဘက်'} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`);
-    }
-
-    // Update opponent info
-    if (data.host && data.guest) {
-      const oppData = isHost ? data.guest : data.host;
-      document.getElementById('opp-name').textContent = oppData.name;
-      document.getElementById('online-count').innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#81C784;display:inline-block;animation:statusPulse 2s infinite;margin-right:4px;"></span>2 Online`;
-    }
-
-    // Remote move applied
-    if (!document.getElementById('game-screen').classList.contains('hidden')) {
-      const remoteState = data.state;
-      if (remoteState) {
-        // Only apply if it's not our turn (i.e., opponent moved)
-        if (remoteState.turn === myColor || remoteState.gameOver) {
-          applyRemoteState(remoteState);
-        }
-      }
-    }
-
-    // Huff from remote
-    if (data.state?.huffTarget !== undefined) {
-      huffTarget = data.state.huffTarget;
-    }
-  });
-}
-
-function listenChat() {
-  const { db, ref, onValue } = window.FB;
-  const r = ref(db, `rooms/${roomId}/chat`);
-  unsubChat = onValue(r, snap => {
-    if (!snap.exists()) return;
-    const msgs = snap.val();
-    const list = Object.values(msgs).sort((a,b) => a.ts - b.ts);
-    renderChat(list);
-  });
-}
-
-function applyRemoteState(st) {
-  board = st.board.map(r => [...r]);
-  currentTurn = st.turn;
-  if (st.lastFrom) lastFrom = st.lastFrom;
-  if (st.lastTo) lastTo = st.lastTo;
-  if (st.captured) {
-    myCaptured = st.captured[myColor] || [];
-    oppCaptured = st.captured[myColor === BLACK ? WHITE : BLACK] || [];
-  }
-  gameOver = st.gameOver || false;
-  if (st.huffTarget !== undefined) huffTarget = st.huffTarget;
-  
-  selectedCell = null; legalMoves = [];
-  renderBoard();
-  updateUI();
-
-  if (st.lastMove) {
-    addLog(st.lastMove);
-  }
-
-  if (st.gameOver && st.winner !== undefined) {
-    triggerWin(st.winner);
-  }
-
-  // Check huff opportunity for us
-  if (st.huffAvailable && st.huffableFor === myColor) {
-    huffTarget = st.huffablePiece;
-    document.getElementById('huff-btn').classList.add('show');
-  }
-}
-
-/* ═══════════════════════════════════════════════════════
-   PUSH STATE TO FIREBASE
-═══════════════════════════════════════════════════════ */
-function pushState(extraInfo = {}) {
-  if (!fbReady || !roomId) return;
-  const { db, ref, update } = window.FB;
-  const captured = {};
-  captured[BLACK] = myCaptured.filter ? myCaptured : [];
-  captured[WHITE] = oppCaptured.filter ? oppCaptured : [];
-  
-  const stateData = {
-    board: board.map(r => [...r]),
-    turn: currentTurn,
-    gameOver,
-    huffTarget: huffTarget || null,
-    captured: {
-      [BLACK]: myCaptured,
-      [WHITE]: oppCaptured
-    },
-    lastFrom, lastTo,
-    ...extraInfo
-  };
-  update(ref(db, `rooms/${roomId}`), { state: stateData });
-}
-
-/* ═══════════════════════════════════════════════════════
-   CHAT
-═══════════════════════════════════════════════════════ */
-window.sendChat = function() {
-  const inp = document.getElementById('chat-input');
-  const txt = inp.value.trim();
-  if (!txt || !fbReady) return;
-  inp.value = '';
-  pushChatMsg(txt, false);
-};
-
-window.sendQuick = function(txt) {
-  pushChatMsg(txt, false);
-};
-
-function sendSystemChat(txt) {
-  pushChatMsg(txt, true);
-}
-
-function pushChatMsg(txt, isSystem) {
-  const { db, ref, push } = window.FB;
-  push(ref(db, `rooms/${roomId}/chat`), {
-    name: isSystem ? 'System' : myName,
-    text: txt,
-    system: isSystem,
-    ts: Date.now()
-  });
-}
-
-function renderChat(list) {
-  const el = document.getElementById('chat-msgs');
-  const wasAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 30;
-  
-  el.innerHTML = '';
-  for (const m of list) {
-    const div = document.createElement('div');
-    div.className = `chat-msg ${m.system ? 'system' : (m.name === myName ? 'own' : 'other')}`;
-    
-    const bub = document.createElement('div');
-    bub.className = 'chat-bubble';
-    
-    if (!m.system && m.name !== myName) {
-      const sender = document.createElement('div');
-      sender.className = 'chat-sender';
-      sender.textContent = m.name;
-      bub.appendChild(sender);
-    }
-    
-    const txt = document.createElement('div');
-    txt.textContent = m.text;
-    bub.appendChild(txt);
-    div.appendChild(bub);
-    el.appendChild(div);
-  }
-  
-  if (wasAtBottom) el.scrollTop = el.scrollHeight;
-}
-
-/* ═══════════════════════════════════════════════════════
-   BOARD INIT
-═══════════════════════════════════════════════════════ */
-function buildInitBoard() {
-  const b = Array(8).fill(null).map(() => Array(8).fill(EMPTY));
-  for (let r=0;r<3;r++) for (let c=0;c<8;c++) if((r+c)%2===1) b[r][c]=BLACK;
-  for (let r=5;r<8;r++) for (let c=0;c<8;c++) if((r+c)%2===1) b[r][c]=WHITE;
+/* ════════════════════════════════════════════════════
+   BOARD INITIALISATION
+════════════════════════════════════════════════════ */
+function buildInitBoard(){
+  // Rows 0-2 = Black (top); rows 5-7 = White (bottom)
+  // Pieces on dark squares: (r+c) % 2 === 1
+  const b=Array(8).fill(null).map(()=>Array(8).fill(EMPTY));
+  for(let r=0;r<3;r++) for(let c=0;c<8;c++) if((r+c)%2===1) b[r][c]=BLACK;
+  for(let r=5;r<8;r++) for(let c=0;c<8;c++) if((r+c)%2===1) b[r][c]=WHITE;
   return b;
 }
 
-function loadGameFromState(st) {
-  board = st.board.map(r => [...r]);
-  currentTurn = st.turn;
-  gameOver = false;
-  myCaptured = []; oppCaptured = []; gameLog = [];
-  selectedCell = null; legalMoves = [];
-  lastFrom = null; lastTo = null;
-  huffTarget = null; huffAvailable = false;
-}
-
-/* ═══════════════════════════════════════════════════════
-   GAME LOGIC - CAPTURES
-═══════════════════════════════════════════════════════ */
-function getCapturePaths(r, c, turn, bs, visited) {
+/* ════════════════════════════════════════════════════
+   GAME LOGIC — CAPTURE PATHS
+════════════════════════════════════════════════════ */
+/*
+  getCapturePaths(r, c, turn, bs, visited)
+  Returns array of paths. Each path = array of steps {r,c,cap:[cr,cc]}
+  'visited' = Set of "cr,cc" strings already jumped in this chain (to avoid re-jump)
+*/
+function getCapturePaths(r, c, turn, bs, visited){
   const piece = bs[r][c];
-  const king = isKing(piece);
-  const dirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
-  let paths = [];
+  const king  = isKing(piece);
+  const dirs  = [[-1,-1],[-1,1],[1,-1],[1,1]];
+  let paths   = [];
 
-  for (const [dr,dc] of dirs) {
-    if (king) {
-      let step=1, foundOpp=null;
-      while(true) {
+  for(const [dr,dc] of dirs){
+    if(king){
+      // King: scan diagonal, find first opponent, then collect all landing squares beyond it
+      let step=1, oppPos=null;
+      while(true){
         const nr=r+dr*step, nc=c+dc*step;
         if(nr<0||nr>=8||nc<0||nc>=8) break;
         const key=`${nr},${nc}`;
-        if(visited.has(key)){step++;continue;}
-        if(bs[nr][nc]===EMPTY) {
-          if(foundOpp!==null) {
+        // Skip a square that was already captured in this chain
+        if(visited.has(key)){ step++; continue; }
+        if(bs[nr][nc]===EMPTY){
+          if(oppPos!==null){
+            // Landing square after opponent — recurse
             const nb=bs.map(row=>[...row]);
-            nb[foundOpp[0]][foundOpp[1]]=EMPTY; nb[r][c]=EMPTY; nb[nr][nc]=piece;
-            const nv=new Set(visited); nv.add(`${foundOpp[0]},${foundOpp[1]}`);
+            nb[oppPos[0]][oppPos[1]]=EMPTY;
+            nb[r][c]=EMPTY;
+            nb[nr][nc]=piece;
+            const nv=new Set(visited); nv.add(`${oppPos[0]},${oppPos[1]}`);
             const sub=getCapturePaths(nr,nc,turn,nb,nv);
-            if(sub.length===0) paths.push([{r:nr,c:nc,cap:foundOpp}]);
-            else for(const sp of sub) paths.push([{r:nr,c:nc,cap:foundOpp},...sp]);
+            if(sub.length===0) paths.push([{r:nr,c:nc,cap:[oppPos[0],oppPos[1]]}]);
+            else for(const sp of sub) paths.push([{r:nr,c:nc,cap:[oppPos[0],oppPos[1]]},...sp]);
           }
           step++;
-        } else if(isOpp(bs[nr][nc],turn)&&foundOpp===null) { foundOpp=[nr,nc]; step++; }
-        else break;
+        } else if(isOpp(bs[nr][nc],turn) && oppPos===null){
+          oppPos=[nr,nc]; step++;
+        } else {
+          break; // own piece or second opponent blocks
+        }
       }
     } else {
-      const mr=r+dr,mc=c+dc, lr=r+dr*2,lc=c+dc*2;
+      // Pawn: jump exactly one opponent diagonally (in any 4 directions — Myanmar rules allow capturing backwards)
+      const mr=r+dr, mc=c+dc;       // the opponent square
+      const lr=r+dr*2, lc=c+dc*2;   // landing square
       if(lr<0||lr>=8||lc<0||lc>=8) continue;
       const key=`${mr},${mc}`;
       if(visited.has(key)) continue;
-      if(bs[mr][mc]!==EMPTY&&isOpp(bs[mr][mc],turn)&&bs[lr][lc]===EMPTY) {
+      if(bs[mr][mc]!==EMPTY && isOpp(bs[mr][mc],turn) && bs[lr][lc]===EMPTY){
         const nb=bs.map(row=>[...row]);
         nb[mr][mc]=EMPTY; nb[r][c]=EMPTY; nb[lr][lc]=piece;
         const nv=new Set(visited); nv.add(key);
@@ -1503,385 +887,766 @@ function getCapturePaths(r, c, turn, bs, visited) {
   return paths;
 }
 
-function getAllCapturePaths(turn,bs) {
-  let res=[];
+function getAllCaptures(turn, bs){
+  const res=[];
   for(let r=0;r<8;r++) for(let c=0;c<8;c++)
-    if(bs[r][c]!==EMPTY&&isOwn(bs[r][c],turn)) {
+    if(bs[r][c]!==EMPTY && isOwn(bs[r][c],turn)){
       const paths=getCapturePaths(r,c,turn,bs,new Set());
       if(paths.length>0) res.push({r,c,paths});
     }
   return res;
 }
 
-function getMaxLen(allCaps) {
+function maxPathLen(allCaps){
   let m=0;
   for(const {paths} of allCaps) for(const p of paths) if(p.length>m) m=p.length;
   return m;
 }
 
-function getNormalMoves(r,c,turn,bs) {
+/* ════════════════════════════════════════════════════
+   GAME LOGIC — NORMAL MOVES
+════════════════════════════════════════════════════ */
+function getNormalMoves(r,c,turn,bs){
   const piece=bs[r][c]; const king=isKing(piece);
+  // Pawns move forward only; Black moves toward row 7, White toward row 0
   const dirs=king?[[-1,-1],[-1,1],[1,-1],[1,1]]:turn===BLACK?[[1,-1],[1,1]]:[[-1,-1],[-1,1]];
-  let moves=[];
-  for(const [dr,dc] of dirs) {
-    if(king) {
+  const moves=[];
+  for(const [dr,dc] of dirs){
+    if(king){
       let s=1;
-      while(true){const nr=r+dr*s,nc=c+dc*s; if(nr<0||nr>=8||nc<0||nc>=8||bs[nr][nc]!==EMPTY)break; moves.push({r:nr,c:nc}); s++;}
+      while(true){
+        const nr=r+dr*s, nc=c+dc*s;
+        if(nr<0||nr>=8||nc<0||nc>=8||bs[nr][nc]!==EMPTY) break;
+        moves.push({r:nr,c:nc}); s++;
+      }
     } else {
-      const nr=r+dr,nc=c+dc;
+      const nr=r+dr, nc=c+dc;
       if(nr>=0&&nr<8&&nc>=0&&nc<8&&bs[nr][nc]===EMPTY) moves.push({r:nr,c:nc});
     }
   }
   return moves;
 }
 
-/* ═══════════════════════════════════════════════════════
-   CELL INTERACTION
-═══════════════════════════════════════════════════════ */
-function selectCell(r,c) {
-  if(gameOver) return;
-  if(currentTurn !== myColor) { showToast('⏳ သင့်အလှည့် မဟုတ်သေး'); return; }
+/* ════════════════════════════════════════════════════
+   TURN TIMER
+════════════════════════════════════════════════════ */
+function startTimer(){
+  clearInterval(timerInterval);
+  timerSeconds=30;
+  updateTimerUI();
+  timerInterval=setInterval(()=>{
+    timerSeconds--;
+    updateTimerUI();
+    if(timerSeconds<=0){
+      clearInterval(timerInterval);
+      onTimerExpired();
+    }
+  },1000);
+}
 
-  // Huff check
-  if(huffAvailable) {
-    showToast('⚠️ ဦးစွာ Huff ဆုံးဖြတ်ပါ');
+function stopTimer(){ clearInterval(timerInterval); }
+
+function updateTimerUI(){
+  const el=document.getElementById('timer-disp');
+  if(!el) return;
+  el.textContent=timerSeconds;
+  el.classList.toggle('danger', timerSeconds<=10);
+}
+
+function onTimerExpired(){
+  // If it's the current player's turn (us) and time is up — nothing auto happens.
+  // Timer is informational; the Huff rule handles the consequence:
+  // Opponent can huff AFTER we make any move having had captures.
+  // Timer expiry for opponent: we can show a toast but NOT auto-move.
+  if(currentTurn===myColor){
+    toast('⏰ အချိန်ကုန်သွားသည်! ဆက်ကစားပါ');
+  } else {
+    toast('⏰ ပြိုင်ဘက် အချိန်ကုန်သွားသည်');
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   CELL CLICK
+════════════════════════════════════════════════════ */
+function onCellClick(r,c){
+  if(gameOver) return;
+
+  // HUFF PHASE: we must decide huff before moving
+  if(huffPending && currentTurn===myColor){
+    toast('⚠️ ဦးစွာ Huff ဆုံးဖြတ်ပါ (Huff Button သို့မဟုတ် ကျော်လွှားပါ)');
     return;
   }
 
-  // Clicking destination
-  if(selectedCell!==null) {
-    const legal=legalMoves.find(m=>m.r===r&&m.c===c);
-    if(legal){ executeMove(selectedCell.r,selectedCell.c,legal); return; }
-    if(board[r][c]!==EMPTY&&isOwn(board[r][c],currentTurn)){
-      deselectAll(); selectPiece(r,c); return;
-    }
-    deselectAll(); renderBoard(); return;
+  // Not our turn
+  if(currentTurn!==myColor){
+    toast('⏳ သင့်အလှည့် မဟုတ်သေးပါ');
+    return;
   }
 
-  if(board[r][c]!==EMPTY&&isOwn(board[r][c],currentTurn)) selectPiece(r,c);
+  // Have a selected piece — try to move
+  if(selCell!==null){
+    const hit=legalMoves.find(m=>m.r===r&&m.c===c);
+    if(hit){ doMove(selCell.r,selCell.c,hit); return; }
+    // Click another own piece
+    if(board[r][c]!==EMPTY && isOwn(board[r][c],currentTurn)){
+      clearSel(); pickPiece(r,c); return;
+    }
+    clearSel(); renderBoard(); return;
+  }
+
+  // Pick a piece
+  if(board[r][c]!==EMPTY && isOwn(board[r][c],currentTurn)) pickPiece(r,c);
 }
 
-function selectPiece(r,c) {
-  const allCaps=getAllCapturePaths(currentTurn,board);
-  const maxLen=getMaxLen(allCaps);
+function pickPiece(r,c){
+  const allCaps=getAllCaptures(currentTurn,board);
+  const maxLen=maxPathLen(allCaps);
 
-  if(maxLen>0) {
-    const mine=allCaps.find(x=>x.r===r&&x.c===c);
-    if(!mine){ showToast('⚠️ ဖမ်းနိုင်သော ကျောက်ကိုသာ ရွေးပါ'); return; }
-    const maxPaths=mine.paths.filter(p=>p.length===maxLen);
-    selectedCell={r,c};
-    // Gather unique first moves
+  if(maxLen>0){
+    // Must capture — only pieces that have max-length paths are selectable
+    const entry=allCaps.find(e=>e.r===r&&e.c===c);
+    if(!entry){ toast('⚔️ ဤကျောက်မှ ထိရောက်သောဖမ်းနိုင်မှုမရှိ — အများဆုံးဖမ်းနိုင်သောကျောက်ကို ရွေးပါ'); return; }
+    const maxPaths=entry.paths.filter(p=>p.length===maxLen);
+    selCell={r,c};
+    // Gather unique first-step destinations
     legalMoves=[];
     const seen=new Set();
     for(const path of maxPaths){
-      const first=path[0]; const key=`${first.r},${first.c}`;
+      const {r:dr,c:dc}=path[0];
+      const key=`${dr},${dc}`;
       if(!seen.has(key)){
         seen.add(key);
-        legalMoves.push({r:first.r,c:first.c,isCapture:true,
-          fullPaths:maxPaths.filter(p=>p[0].r===first.r&&p[0].c===first.c)});
+        legalMoves.push({r:dr,c:dc,isCapture:true,
+          paths:maxPaths.filter(p=>p[0].r===dr&&p[0].c===dc)});
       }
     }
   } else {
     const moves=getNormalMoves(r,c,currentTurn,board);
-    if(moves.length===0){ showToast('⚠️ ဤခုနေ ကစားမရ'); return; }
-    selectedCell={r,c};
+    if(!moves.length){ toast('⚠️ ဤကျောက်မှ ရွေ့နိုင်သောနေရာမရှိပါ'); return; }
+    selCell={r,c};
     legalMoves=moves.map(m=>({...m,isCapture:false}));
   }
   renderBoard();
 }
 
-function executeMove(fromR,fromC,move) {
-  const piece=board[fromR][fromC];
-  lastFrom={r:fromR,c:fromC}; lastTo={r:move.r,c:move.c};
+/* ════════════════════════════════════════════════════
+   EXECUTE MOVE
+════════════════════════════════════════════════════ */
+function doMove(fr,fc,move){
+  // Did we have captures but chose a normal move? (Huff rule trigger)
+  const allCaps=getAllCaptures(currentTurn,board);
+  const hadCaptures=allCaps.length>0;
 
-  if(move.isCapture) {
-    // Apply first path (auto-select best)
-    const path=move.fullPaths[0];
-    applyCapturePath(fromR,fromC,path);
+  lastFrom={r:fr,c:fc};
+
+  if(move.isCapture){
+    // Apply the first (and only — we auto-pick highest) path
+    const path=move.paths[0];
+    applyCapturePath(fr,fc,path);
+    // No huff trigger — we captured correctly
+    clearSel();
+    finishTurn(false, null);
   } else {
+    // Normal move
+    const piece=board[fr][fc];
     board[move.r][move.c]=piece;
-    board[fromR][fromC]=EMPTY;
+    board[fr][fc]=EMPTY;
+    lastTo={r:move.r,c:move.c};
     promoteCheck(move.r,move.c);
-    addLog(`${currentTurn===BLACK?'⬛':'⬜'} (${fromR},${fromC})→(${move.r},${move.c})`);
-    
-    // Check huff: did we have captures we skipped? (No—game already enforces)
-    finishMove('normal');
+    addLog(`${currentTurn===BLACK?'⬛':'⬜'} (${String.fromCharCode(65+fc)}${fr+1})→(${String.fromCharCode(65+move.c)}${move.r+1})`);
+    clearSel();
+    // If we had captures available but made a normal move: opponent gets huff opportunity
+    finishTurn(hadCaptures, hadCaptures ? {r:fr,c:fc} : null);
   }
 }
 
-function applyCapturePath(fromR,fromC,path) {
-  let r=fromR,c=fromC;
+function applyCapturePath(fr, fc, path){
+  let r=fr, c=fc;
   const piece=board[r][c];
   let count=0;
 
-  for(const step of path) {
-    const cap=step.cap;
-    const cr=Array.isArray(cap)?cap[0]:cap[0];
-    const cc=Array.isArray(cap)?cap[1]:cap[1];
-    
-    // Track captured
-    const capturedPiece = board[cr][cc];
-    if(myColor===currentTurn) myCaptured.push(capturedPiece);
-    else oppCaptured.push(capturedPiece);
-    
-    board[cr][cc]=EMPTY; board[r][c]=EMPTY; board[step.r][step.c]=piece;
+  for(const step of path){
+    const [cr,cc]=step.cap;
+    // Record captured piece
+    capturedBy[currentTurn].push(board[cr][cc]);
+    board[cr][cc]=EMPTY;
+    board[r][c]=EMPTY;
+    board[step.r][step.c]=piece;
     r=step.r; c=step.c; count++;
   }
-  
-  promoteCheck(r,c);
   lastTo={r,c};
-  addLog(`${currentTurn===BLACK?'⬛':'⬜'} ×${count}ကြိမ် ဖမ်းမိသည်`);
-  finishMove('capture', count);
+  promoteCheck(r,c);
+  addLog(`${currentTurn===BLACK?'⬛':'⬜'} ×${count} ဖမ်းမိသည် (${String.fromCharCode(65+fc)}${fr+1})`);
 }
 
-function promoteCheck(r,c) {
-  if(board[r][c]===BLACK&&r===7) board[r][c]=BLACK_KING;
-  if(board[r][c]===WHITE&&r===0) board[r][c]=WHITE_KING;
+function promoteCheck(r,c){
+  if(board[r][c]===BLACK && r===7) board[r][c]=BK;
+  if(board[r][c]===WHITE && r===0) board[r][c]=WK;
 }
 
-function finishMove(type, captureCount=0) {
-  deselectAll();
-  
-  // Check win
-  const pieces=countPieces();
-  if(pieces.black===0){ endGame(WHITE); return; }
-  if(pieces.white===0){ endGame(BLACK); return; }
+/* ════════════════════════════════════════════════════
+   FINISH TURN & PUSH TO FIREBASE
+════════════════════════════════════════════════════ */
+function finishTurn(triggerHuff, huffPos){
+  // Count remaining pieces
+  const {bc,wc}=countPieces();
+  if(bc===0){ endGame(WHITE,'ဖြူ'); return; }
+  if(wc===0){ endGame(BLACK,'မဲ');  return; }
 
-  // Check opponent has moves
   const nextTurn=currentTurn===BLACK?WHITE:BLACK;
-  const hasCaps=getAllCapturePaths(nextTurn,board).length>0;
-  let hasNorm=false;
-  if(!hasCaps) for(let r=0;r<8;r++) for(let c=0;c<8;c++)
-    if(isOwn(board[r][c],nextTurn)&&getNormalMoves(r,c,nextTurn,board).length>0) hasNorm=true;
-  if(!hasCaps&&!hasNorm){ endGame(currentTurn); return; }
 
-  currentTurn=nextTurn;
-  renderBoard(); updateUI();
-  pushState({ lastMove: gameLog[0] || '', winner:null });
-}
-
-function countPieces() {
-  let black=0,white=0;
-  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
-    if(isBlack(board[r][c]))black++; if(isWhite(board[r][c]))white++;
+  // Check if nextTurn player has any move at all
+  const nextCaps=getAllCaptures(nextTurn,board);
+  let nextHasMove=nextCaps.length>0;
+  if(!nextHasMove){
+    for(let r=0;r<8;r++) for(let c=0;c<8;c++)
+      if(isOwn(board[r][c],nextTurn)&&getNormalMoves(r,c,nextTurn,board).length>0){
+        nextHasMove=true; break;
+      }
   }
-  return{black,white};
+  if(!nextHasMove){ endGame(currentTurn, currentTurn===BLACK?'မဲ':'ဖြူ'); return; }
+
+  localVersion++;
+  const stateToSave={
+    board: board.map(r=>[...r]),
+    turn: nextTurn,
+    version: localVersion,
+    gameOver: false,
+    winner: null,
+    capturedBy:{
+      [BLACK]:[...capturedBy[BLACK]],
+      [WHITE]:[...capturedBy[WHITE]]
+    },
+    lastFrom, lastTo,
+    lastLog: gameLog[0]||'',
+    // Huff info: tell the NEXT player (opponent) that they can huff
+    huffAvail: triggerHuff,
+    huffPos: triggerHuff ? huffPos : null,
+    huffFor: triggerHuff ? nextTurn : null  // the player who gets to huff
+  };
+  pushState(stateToSave);
+
+  // Switch locally
+  currentTurn=nextTurn;
+  // If we are the nextTurn (we just received), huff check is for OTHER player
+  // We handle huff display in applyRemote
+  renderBoard(); updateUI();
+  stopTimer(); startTimer();
 }
 
-function endGame(winner) {
-  gameOver=true;
-  pushState({gameOver:true, winner, lastMove: gameLog[0]||''});
-  triggerWin(winner);
+function endGame(winner, winnerName){
+  gameOver=true; stopTimer();
+  localVersion++;
+  const st={
+    board:board.map(r=>[...r]),
+    turn:currentTurn,
+    version:localVersion,
+    gameOver:true,
+    winner,
+    capturedBy:{[BLACK]:[...capturedBy[BLACK]],[WHITE]:[...capturedBy[WHITE]]},
+    lastFrom,lastTo,lastLog:gameLog[0]||'',
+    huffAvail:false,huffPos:null,huffFor:null
+  };
+  pushState(st);
+  showWin(winner===myColor,winnerName);
 }
 
-function triggerWin(winner) {
-  gameOver=true;
-  const iWon = winner===myColor;
-  document.getElementById('win-icon').textContent = iWon ? '🏆' : '😔';
-  document.getElementById('win-title').textContent = iWon ? 'အနိုင်ရပြီ!' : 'ရှုံးနိမ့်သွားသည်';
-  const winnerName = winner===myColor ? myName :
-    (document.getElementById('opp-name').textContent || 'ပြိုင်ဘက်');
-  document.getElementById('win-msg').textContent =
-    iWon ? `🎉 ဂိမ်းကို သင်အနိုင်ရပြီ! ကောင်းမွန်သောဂိမ်းပါ!`
-          : `${winnerName} အနိုင်ရသည်`;
-  document.getElementById('win-overlay').classList.add('show');
-  sendSystemChat(iWon ? `🏆 ${myName} အနိုင်ရပြီ!` : `🏆 ဂိမ်းပြီးပါပြီ!`);
-}
-
-/* ═══════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════
    HUFF
-═══════════════════════════════════════════════════════ */
-window.huffAction = function() {
-  if(!huffTarget) return;
-  board[huffTarget[0]][huffTarget[1]]=EMPTY;
-  huffAvailable=false; huffTarget=null;
-  document.getElementById('huff-btn').classList.remove('show');
-  addLog('💨 Huff! ကျောက်ဖယ်ရှားလိုက်သည်');
-  pushState();
+════════════════════════════════════════════════════ */
+window.doHuff=function(){
+  if(!huffPending||!huffPiecePos) return;
+  const {r,c}=huffPiecePos;
+  if(board[r][c]!==EMPTY){
+    // Record as capture for us
+    capturedBy[myColor].push(board[r][c]);
+    board[r][c]=EMPTY;
+    addLog(`💨 Huff! (${String.fromCharCode(65+c)}${r+1}) ဖယ်ရှားလိုက်သည်`);
+  }
+  clearHuff();
+  localVersion++;
+  pushState({
+    board:board.map(r=>[...r]),
+    turn:currentTurn,
+    version:localVersion,
+    gameOver:false, winner:null,
+    capturedBy:{[BLACK]:[...capturedBy[BLACK]],[WHITE]:[...capturedBy[WHITE]]},
+    lastFrom,lastTo,lastLog:gameLog[0]||'',
+    huffAvail:false,huffPos:null,huffFor:null
+  });
   renderBoard(); updateUI();
 };
 
-/* ═══════════════════════════════════════════════════════
+function clearHuff(){
+  huffPending=false; huffPiecePos=null;
+  document.getElementById('huff-btn').classList.remove('show');
+  document.getElementById('huff-notice').classList.remove('show');
+}
+
+/* ════════════════════════════════════════════════════
    RESIGN
-═══════════════════════════════════════════════════════ */
-window.resignGame = function() {
+════════════════════════════════════════════════════ */
+window.doResign=function(){
   if(gameOver) return;
   if(!confirm('ဆုံးနိုင်ကြောင်း သေချာပါသလား?')) return;
-  endGame(myColor===BLACK?WHITE:BLACK);
+  endGame(myColor===BLACK?WHITE:BLACK, myColor===BLACK?'ဖြူ':'မဲ');
 };
 
-/* ═══════════════════════════════════════════════════════
-   RENDER
-═══════════════════════════════════════════════════════ */
-function renderBoard() {
+/* ════════════════════════════════════════════════════
+   FIREBASE PUSH
+════════════════════════════════════════════════════ */
+function pushState(state){
+  if(!fbReady||!roomId) return;
+  const {db,ref,update}=FB();
+  update(ref(db,`rooms/${roomId}`),{state});
+}
+
+/* ════════════════════════════════════════════════════
+   FIREBASE ROOM MANAGEMENT
+════════════════════════════════════════════════════ */
+window.createRoom=async function(){
+  if(!fbReady){setLobbyStatus('⏳ Firebase ချိတ်ဆက်နေသည်...'); return;}
+  myName=document.getElementById('inp-name').value.trim()||'ကစားသမား ①';
+  myColor=BLACK; isHost=true;
+  roomId=Math.random().toString(36).substring(2,8).toUpperCase();
+
+  const {db,ref,set,onDisconnect:od}=FB();
+  const r=ref(db,`rooms/${roomId}`);
+  const initBoard=buildInitBoard();
+  await set(r,{
+    host:{name:myName,color:BLACK},
+    guest:null,
+    state:{
+      board:initBoard, turn:BLACK, version:0,
+      gameOver:false, winner:null,
+      capturedBy:{[BLACK]:[],[WHITE]:[]},
+      lastFrom:null, lastTo:null, lastLog:'',
+      huffAvail:false, huffPos:null, huffFor:null
+    },
+    status:'waiting', created:Date.now()
+  });
+  od(r).remove();
+  showWaitingScreen(roomId);
+  listenRoom();
+};
+
+window.joinRoom=async function(){
+  if(!fbReady){setLobbyStatus('⏳ Firebase ချိတ်ဆက်နေသည်...'); return;}
+  myName=document.getElementById('inp-name').value.trim()||'ကစားသမား ②';
+  const code=document.getElementById('inp-code').value.trim().toUpperCase();
+  if(code.length<4){setLobbyStatus('⚠️ Room Code ထည့်ပါ'); return;}
+  roomId=code; myColor=WHITE; isHost=false;
+
+  const {db,ref,get,update}=FB();
+  const r=ref(db,`rooms/${roomId}`);
+  const snap=await get(r);
+  if(!snap.exists()){setLobbyStatus('❌ Room မတွေ့ပါ — Code စစ်ကြည့်ပါ'); return;}
+  const data=snap.val();
+  if(data.status!=='waiting'){setLobbyStatus('❌ Room ပြည့်နေသည် သို့မဟုတ် ကစားနေပြီ'); return;}
+
+  await update(ref(db,`rooms/${roomId}`),{
+    guest:{name:myName,color:WHITE},
+    status:'playing'
+  });
+
+  loadState(data.state);
+  showGameScreen();
+  listenRoom();
+  listenChat();
+};
+
+window.cancelRoom=function(){
+  if(roomId){const {db,ref,remove}=FB(); remove(ref(db,`rooms/${roomId}`));}
+  document.getElementById('waiting').classList.add('hidden');
+  document.getElementById('lobby').classList.remove('hidden');
+  roomId='';
+};
+
+/* ════════════════════════════════════════════════════
+   FIREBASE LISTENERS
+════════════════════════════════════════════════════ */
+function listenRoom(){
+  const {db,ref,onValue}=FB();
+  const r=ref(db,`rooms/${roomId}`);
+  unsub=onValue(r,snap=>{
+    if(!snap.exists()){
+      if(!gameOver){toast('⚠️ Room ပျက်သွားသည်'); doLeave();}
+      return;
+    }
+    const data=snap.val();
+
+    // Update opponent name
+    if(data.host&&data.guest){
+      const opp=isHost?data.guest:data.host;
+      document.getElementById('opp-name').textContent=opp.name||'ပြိုင်ဘက်';
+    }
+
+    // Host: guest just joined
+    if(isHost && data.status==='playing' &&
+       document.getElementById('waiting') &&
+       !document.getElementById('waiting').classList.contains('hidden')){
+      loadState(data.state);
+      showGameScreen();
+      listenChat();
+      sysChat(`🎮 ${data.guest?.name||'ပြိုင်ဘက်'} ဝင်ရောက်လာပြီ! ဂိမ်းစပါသည်!`);
+    }
+
+    // Apply remote state ONLY if:
+    //   (a) Game screen is visible
+    //   (b) The state is newer than our local version OR we are not the one who just pushed
+    //   (c) It's not our turn (meaning opponent moved) OR game is over
+    if(document.getElementById('game-screen').classList.contains('hidden')) return;
+
+    const st=data.state;
+    if(!st) return;
+
+    const remoteVer=st.version||0;
+    // We skip states that we ourselves pushed (same or older version + our turn stayed same)
+    // Key check: after OUR move, currentTurn flips to opponent. Remote state shows that.
+    // After THEIR move, remote state shows it's now OUR turn again.
+    // So: only apply if remote.turn === myColor (it's now our turn, meaning opponent moved)
+    //     OR if remote.gameOver
+    //     OR if remote.huffFor === myColor (opponent triggered huff for us)
+
+    const shouldApply =
+      (st.turn === myColor && remoteVer > 0) ||
+      st.gameOver ||
+      (st.huffAvail && st.huffFor === myColor);
+
+    if(shouldApply){
+      applyRemoteState(st);
+    }
+  });
+}
+
+function listenChat(){
+  const {db,ref,onValue}=FB();
+  unsubChat=onValue(ref(db,`rooms/${roomId}/chat`),snap=>{
+    if(!snap.exists()) return;
+    const msgs=Object.values(snap.val()).sort((a,b)=>a.ts-b.ts);
+    renderChat(msgs);
+  });
+}
+
+/* ════════════════════════════════════════════════════
+   APPLY REMOTE STATE (opponent's move arrived)
+════════════════════════════════════════════════════ */
+function applyRemoteState(st){
+  // Restore board
+  board=st.board.map(r=>[...r]);
+  currentTurn=st.turn;
+  localVersion=st.version||0;
+
+  // Restore lastFrom/lastTo for highlight
+  lastFrom=st.lastFrom||null;
+  lastTo  =st.lastTo  ||null;
+
+  // Restore captured counts
+  // capturedBy[BLACK] = pieces Black captured (i.e. White pieces taken by Black)
+  if(st.capturedBy){
+    capturedBy[BLACK]=[...(st.capturedBy[BLACK]||[])];
+    capturedBy[WHITE]=[...(st.capturedBy[WHITE]||[])];
+  }
+
+  if(st.lastLog) addLog(st.lastLog);
+
+  gameOver=st.gameOver||false;
+
+  // Clear selection
+  selCell=null; legalMoves=[];
+
+  // Handle huff opportunity: opponent made a normal move despite having captures
+  // st.huffFor === myColor means IT IS OUR TURN to decide huff
+  clearHuff();
+  if(st.huffAvail && st.huffFor===myColor && st.huffPos){
+    huffPending=true;
+    huffPiecePos=st.huffPos;
+    document.getElementById('huff-btn').classList.add('show');
+    document.getElementById('huff-notice').classList.add('show');
+    toast('💨 ပြိုင်ဘက်က ဖမ်းမစားခဲ့ပါ! Huff ခွင့်ရှိသည်!');
+  }
+
+  renderBoard();
+  updateUI();
+
+  if(!gameOver){
+    stopTimer(); startTimer();
+  }
+
+  if(st.gameOver && st.winner!==undefined && st.winner!==null){
+    stopTimer();
+    showWin(st.winner===myColor, st.winner===BLACK?'မဲ':'ဖြူ');
+  }
+}
+
+function loadState(st){
+  board=st.board.map(r=>[...r]);
+  currentTurn=st.turn||BLACK;
+  localVersion=st.version||0;
+  gameOver=false;
+  capturedBy={[BLACK]:[],[WHITE]:[]};
+  gameLog=[];
+  selCell=null; legalMoves=[];
+  lastFrom=null; lastTo=null;
+  huffPending=false; huffPiecePos=null;
+}
+
+/* ════════════════════════════════════════════════════
+   WIN
+════════════════════════════════════════════════════ */
+function showWin(iWon, winnerColorName){
+  document.getElementById('w-icon').textContent=iWon?'🏆':'😔';
+  document.getElementById('w-title').textContent=iWon?'အနိုင်ရပြီ! 🎉':'ရှုံးနိမ့်သွားသည်';
+  const oppName=document.getElementById('opp-name').textContent||'ပြိုင်ဘက်';
+  document.getElementById('w-msg').textContent=
+    iWon?`ကောင်းမွန်သောဂိမ်းပါ! ${myName} အနိုင်ရပြီ!`
+        :`${oppName} (${winnerColorName}) အနိုင်ရသည်`;
+  document.getElementById('win-overlay').classList.add('show');
+  if(iWon) sysChat(`🏆 ${myName} အနိုင်ရပြီ! ကောင်းမွန်သောဂိမ်းပါ!`);
+}
+
+window.doLeave=function(){
+  gameOver=true; stopTimer();
+  if(unsub) try{const{db,ref,off}=FB();off(ref(db,`rooms/${roomId}`),unsub);}catch(e){}
+  if(unsubChat) try{const{db,ref,off}=FB();off(ref(db,`rooms/${roomId}/chat`),unsubChat);}catch(e){}
+  if(isHost&&roomId){const{db,ref,remove}=FB();remove(ref(db,`rooms/${roomId}`));}
+  document.getElementById('win-overlay').classList.remove('show');
+  document.getElementById('game-screen').classList.add('hidden');
+  document.getElementById('lobby').classList.remove('hidden');
+  roomId=''; myColor=null; isHost=false;
+  gameLog=[]; capturedBy={[BLACK]:[],[WHITE]:[]};
+};
+
+/* ════════════════════════════════════════════════════
+   CHAT
+════════════════════════════════════════════════════ */
+window.doSendChat=function(){
+  const el=document.getElementById('chat-inp');
+  const txt=el.value.trim(); if(!txt||!fbReady) return;
+  el.value=''; pushChat(txt,false);
+};
+window.quickMsg=function(t){ pushChat(t,false); };
+function sysChat(t){ pushChat(t,true); }
+function pushChat(txt,sys){
+  if(!fbReady||!roomId) return;
+  const{db,ref,push}=FB();
+  push(ref(db,`rooms/${roomId}/chat`),{
+    name:sys?'System':myName, text:txt, sys, ts:Date.now()
+  });
+}
+function renderChat(list){
+  const el=document.getElementById('chat-msgs');
+  const atBottom=el.scrollHeight-el.scrollTop<=el.clientHeight+30;
+  el.innerHTML='';
+  for(const m of list){
+    const wrap=document.createElement('div');
+    wrap.className=`chat-msg ${m.sys?'sys':(m.name===myName?'own':'other')}`;
+    const bub=document.createElement('div');
+    bub.className='chat-bub';
+    if(!m.sys&&m.name!==myName){
+      const s=document.createElement('div'); s.className='chat-sender'; s.textContent=m.name;
+      bub.appendChild(s);
+    }
+    const t=document.createElement('div'); t.textContent=m.text; bub.appendChild(t);
+    wrap.appendChild(bub); el.appendChild(wrap);
+  }
+  if(atBottom) el.scrollTop=el.scrollHeight;
+}
+
+/* ════════════════════════════════════════════════════
+   RENDER BOARD
+   FIX: Board rendering uses ACTUAL board coords always.
+        For White player, we iterate display rows top→bottom but map them
+        to ACTUAL board rows bottom→top.
+        Dark cell = (actualR + actualC) % 2 === 1  — always uses actual coords.
+════════════════════════════════════════════════════ */
+function renderBoard(){
   const el=document.getElementById('board');
   if(!el) return;
   el.innerHTML='';
-  const legalSet=new Map();
-  for(const m of legalMoves) legalSet.set(`${m.r},${m.c}`,m);
 
-  const displayBoard = (myColor===WHITE) ?
-    [...board].reverse().map(row=>[...row].reverse()) : board;
+  const legalMap=new Map();
+  for(const m of legalMoves) legalMap.set(`${m.r},${m.c}`,m);
 
-  for(let dr=0;dr<8;dr++) {
-    for(let dc=0;dc<8;dc++) {
-      const r=myColor===WHITE?(7-dr):dr;
-      const c=myColor===WHITE?(7-dc):dc;
-      
+  // For White: display row 0 = actual row 7 (flip vertically + horizontally)
+  // For Black: display row 0 = actual row 0
+  for(let dr=0;dr<8;dr++){
+    for(let dc=0;dc<8;dc++){
+      // Map display (dr,dc) → actual board (r,c)
+      const r = (myColor===WHITE) ? (7-dr) : dr;
+      const c = (myColor===WHITE) ? (7-dc) : dc;
+
       const cell=document.createElement('div');
+
+      // Dark squares: (r+c) odd — always based on ACTUAL coordinates
       const isDark=(r+c)%2===1;
       cell.className=`cell ${isDark?'dark':'light'}`;
+      if(!isDark) cell.classList.add('no-hover');
 
-      const key=`${r},${c}`;
-      const isSel=selectedCell&&selectedCell.r===r&&selectedCell.c===c;
-      const isLegal=legalSet.has(key);
+      const isSel=selCell&&selCell.r===r&&selCell.c===c;
+      const lm=legalMap.get(`${r},${c}`);
 
-      if(isSel) cell.classList.add('selected-cell');
-      else if(isLegal){
-        const m=legalSet.get(key);
-        cell.classList.add(m.isCapture?'capture-cell':'move-cell');
-      }
+      if(isSel)      cell.classList.add('sel-cell');
+      else if(lm)    cell.classList.add(lm.isCapture?'cap-cell':'move-cell');
 
-      if(lastFrom&&lastFrom.r===r&&lastFrom.c===c) cell.classList.add('last-from');
-      if(lastTo&&lastTo.r===r&&lastTo.c===c) cell.classList.add('last-to');
+      if(lastFrom&&lastFrom.r===r&&lastFrom.c===c) cell.classList.add('from-cell');
+      if(lastTo  &&lastTo.r  ===r&&lastTo.c  ===c) cell.classList.add('to-cell');
 
-      if(board[r][c]!==EMPTY) {
+      if(board[r][c]!==EMPTY){
         const p=document.createElement('div');
-        const isBlk=isBlack(board[r][c]);
-        p.className=`piece ${isBlk?'black-p':'white-p'} ${isKing(board[r][c])?'king-p':''}`;
-        if(isSel) p.classList.add('selected-p');
+        const blk=isBlack(board[r][c]);
+        p.className=`piece ${blk?'black-p':'white-p'} ${isKing(board[r][c])?'king-p':''}`;
+        if(isSel) p.classList.add('sel-p');
+        // Huff target highlight
+        if(huffPending&&huffPiecePos&&huffPiecePos.r===r&&huffPiecePos.c===c)
+          p.classList.add('huff-target-p');
         cell.appendChild(p);
-      } else if(isLegal&&!isSel) {
+      } else if(lm&&!isSel){
         const dot=document.createElement('div');
-        dot.className=legalSet.get(key).isCapture?'cap-dot':'move-dot';
+        dot.className=lm.isCapture?'cap-dot':'move-dot';
         cell.appendChild(dot);
       }
 
-      cell.addEventListener('click',()=>selectCell(r,c));
+      cell.addEventListener('click',()=>onCellClick(r,c));
       el.appendChild(cell);
     }
   }
 }
 
-function updateUI() {
+/* ════════════════════════════════════════════════════
+   UPDATE UI (panels, dots, timer label)
+════════════════════════════════════════════════════ */
+function updateUI(){
   if(!myColor) return;
-  const pieces=countPieces();
-  const myTotal=myColor===BLACK?pieces.black:pieces.white;
-  const oppTotal=myColor===BLACK?pieces.white:pieces.black;
+  const {bc,wc}=countPieces();
+  const myTotal  = myColor===BLACK ? bc : wc;
+  const oppTotal = myColor===BLACK ? wc : bc;
+  const oppColor = myColor===BLACK ? WHITE : BLACK;
 
-  // Piece dots - me
-  const myDots=document.getElementById('my-pieces-dots');
-  if(myDots){myDots.innerHTML='';
-    for(let i=0;i<12;i++){const d=document.createElement('span');d.className=`mini-pc ${myColor===BLACK?'b':'w'}${i>=myTotal?' lost':''}`;myDots.appendChild(d);}
-  }
+  // Piece dots — mine
+  buildDots('my-dots', myColor===BLACK?'b':'w', myTotal);
+  // Piece dots — opponent
+  buildDots('opp-dots', oppColor===BLACK?'b':'w', oppTotal);
 
-  // Piece dots - opp
-  const oppDots=document.getElementById('opp-pieces-dots');
-  if(oppDots){oppDots.innerHTML='';
-    const oppColor=myColor===BLACK?WHITE:BLACK;
-    for(let i=0;i<12;i++){const d=document.createElement('span');d.className=`mini-pc ${oppColor===BLACK?'b':'w'}${i>=oppTotal?' lost':''}`;oppDots.appendChild(d);}
-  }
-
-  // Turn display
+  // Turn indicator
   const isMeTurn=currentTurn===myColor;
-  document.getElementById('turn-text').textContent=isMeTurn?'သင့်အလှည့်':'ပြိုင်ဘက် အလှည့်';
-  document.getElementById('turn-name-display').textContent=isMeTurn?myName:(document.getElementById('opp-name').textContent||'ပြိုင်ဘက်');
+  document.getElementById('turn-label').textContent=isMeTurn?'သင့်အလှည့်':'ပြိုင်ဘက် အလှည့်';
+  document.getElementById('turn-who').textContent=
+    isMeTurn?myName:(document.getElementById('opp-name').textContent||'ပြိုင်ဘက်');
   document.getElementById('my-card').classList.toggle('active',isMeTurn);
   document.getElementById('opp-card').classList.toggle('active',!isMeTurn);
 
-  // Captured pieces display
-  renderCaptured('i-captured', myCaptured);
-  renderCaptured('opp-captured', oppCaptured);
+  // Captured display
+  // My captures = capturedBy[myColor] (pieces *I* captured = opponent's pieces)
+  buildCapRow('my-cap',  capturedBy[myColor]);
+  buildCapRow('opp-cap', capturedBy[oppColor]);
 
-  // Force capture hint
-  const allCaps=getAllCapturePaths(currentTurn,board);
-  if(allCaps.length>0&&currentTurn===myColor) {
-    showToast('⚔️ ဖမ်းယူရမည်!');
+  // Force-capture hint
+  if(currentTurn===myColor && !gameOver){
+    const caps=getAllCaptures(myColor,board);
+    if(caps.length>0) toast('⚔️ ဖမ်းယူရမည်! ဆုံးချင်ဆုံးသောနည်းလမ်းကို ရွေးပါ');
   }
 }
 
-function renderCaptured(elId, list) {
-  const el=document.getElementById(elId);
-  if(!el) return;
-  el.innerHTML='';
-  for(const p of list){
+function buildDots(elId, cls, count){
+  const el=document.getElementById(elId); if(!el) return; el.innerHTML='';
+  for(let i=0;i<12;i++){
     const d=document.createElement('span');
-    d.className=`mini-pc ${isBlack(p)?'b':'w'}`;
+    d.className=`mini-dot ${cls}${i>=count?' dead':''}`;
     el.appendChild(d);
   }
 }
 
-function addLog(txt) {
-  gameLog.unshift(txt);
-  if(gameLog.length>40) gameLog.pop();
-  const list=document.getElementById('log-list');
-  if(!list) return;
-  list.innerHTML='';
-  for(const e of gameLog){
-    const li=document.createElement('li');
-    li.textContent=e; list.appendChild(li);
+function buildCapRow(elId, list){
+  const el=document.getElementById(elId); if(!el) return; el.innerHTML='';
+  for(const p of list){
+    const d=document.createElement('span');
+    d.className=`mini-dot ${isBlack(p)?'b':'w'}`;
+    el.appendChild(d);
   }
 }
 
-function deselectAll(){ selectedCell=null; legalMoves=[]; }
-
-/* ═══════════════════════════════════════════════════════
-   SCREEN MANAGEMENT
-═══════════════════════════════════════════════════════ */
-function showWaiting(id) {
-  document.getElementById('waiting').classList.remove('hidden');
-  document.getElementById('lobby').classList.add('hidden');
-  document.getElementById('w-room-id').textContent=id;
+/* ════════════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════════════ */
+function countPieces(){
+  let bc=0,wc=0;
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    if(isBlack(board[r][c])) bc++;
+    if(isWhite(board[r][c])) wc++;
+  }
+  return{bc,wc};
 }
 
-function showGame() {
+function addLog(txt){
+  if(gameLog[0]===txt) return; // deduplicate
+  gameLog.unshift(txt);
+  if(gameLog.length>40) gameLog.pop();
+  const list=document.getElementById('log-list'); if(!list) return;
+  list.innerHTML='';
+  for(const e of gameLog){
+    const li=document.createElement('li'); li.textContent=e; list.appendChild(li);
+  }
+}
+
+function clearSel(){ selCell=null; legalMoves=[]; }
+
+/* ════════════════════════════════════════════════════
+   SCREEN MANAGEMENT
+════════════════════════════════════════════════════ */
+function showWaitingScreen(code){
+  document.getElementById('lobby').classList.add('hidden');
+  document.getElementById('waiting').classList.remove('hidden');
+  document.getElementById('w-code').textContent=code;
+}
+
+function showGameScreen(){
   document.getElementById('waiting').classList.add('hidden');
   document.getElementById('lobby').classList.add('hidden');
   document.getElementById('game-screen').classList.remove('hidden');
-  document.getElementById('top-room-id').textContent=roomId;
+  document.getElementById('top-room').textContent=roomId;
 
-  // Set player info
+  // Set my info
   document.getElementById('my-name').textContent=myName;
-  document.getElementById('my-role').textContent=myColor===BLACK?'⬛ မဲ (Black)':'⬜ ဖြူ (White)';
+  document.getElementById('my-role').textContent=myColor===BLACK?'⬛ မဲ (Black — ကစားဦးမည်)':'⬜ ဖြူ (White)';
+  document.getElementById('my-avatar').className=`p-avatar ${myColor===BLACK?'av-b':'av-w'}`;
   document.getElementById('my-avatar').textContent=myColor===BLACK?'⬛':'⬜';
-  document.getElementById('my-avatar').className=`p-avatar ${myColor===BLACK?'black-av':'white-av'}`;
+
+  // Set opp avatar
+  const oppAv=document.getElementById('opp-avatar');
+  oppAv.className=`p-avatar ${myColor===BLACK?'av-w':'av-b'}`;
+  oppAv.textContent=myColor===BLACK?'⬜':'⬛';
+  document.getElementById('opp-role').textContent=myColor===BLACK?'⬜ ဖြူ (White)':'⬛ မဲ (Black — ကစားဦးမည်)';
+
+  // Build coordinate labels correctly for my perspective
+  buildCoordLabels();
 
   renderBoard(); updateUI();
+  startTimer();
 }
 
-window.leaveGame = function() {
-  gameOver=true;
-  if(unsubGame){ window.FB.off(window.FB.ref(window.FB.db,`rooms/${roomId}`),unsubGame); }
-  if(unsubChat){ window.FB.off(window.FB.ref(window.FB.db,`rooms/${roomId}/chat`),unsubChat); }
-  if(isHost&&roomId){ window.FB.remove(window.FB.ref(window.FB.db,`rooms/${roomId}`)); }
-  document.getElementById('win-overlay').classList.remove('show');
-  document.getElementById('game-screen').classList.add('hidden');
-  document.getElementById('lobby').classList.remove('hidden');
-  // Reset
-  roomId=''; myColor=null; gameRef=null; chatRef=null;
-  gameLog=[]; myCaptured=[]; oppCaptured=[];
-};
-
-/* ═══════════════════════════════════════════════════════
-   UTILITIES
-═══════════════════════════════════════════════════════ */
-function setLobbyStatus(txt){ document.getElementById('lobby-status').textContent=txt; }
-
-let toastTimer=null;
-function showToast(txt) {
-  const t=document.getElementById('toast');
-  t.textContent=txt; t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+function buildCoordLabels(){
+  const cols=document.getElementById('col-labels');
+  const rows=document.getElementById('row-labels');
+  cols.innerHTML=''; rows.innerHTML='';
+  // Columns: A-H, always left-right from my perspective
+  const colLetters=myColor===WHITE?'HGFEDCBA'.split(''):'ABCDEFGH'.split('');
+  for(const l of colLetters){
+    const s=document.createElement('span'); s.textContent=l; cols.appendChild(s);
+  }
+  // Rows: from my perspective, top row is "far" side
+  const rowNums=myColor===WHITE?[1,2,3,4,5,6,7,8]:[8,7,6,5,4,3,2,1];
+  for(const n of rowNums){
+    const s=document.createElement('span'); s.textContent=n; rows.appendChild(s);
+  }
 }
 
-// ── INIT ──
-document.getElementById('player-name').addEventListener('keydown', e => {
-  if(e.key==='Enter') createRoom();
-});
-document.getElementById('room-code-input').addEventListener('keydown', e => {
-  if(e.key==='Enter') joinRoom();
-});
+/* ════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════ */
+document.getElementById('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')createRoom();});
+document.getElementById('inp-code').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom();});
+document.getElementById('inp-code').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();});
 </script>
 </body>
 </html>

@@ -584,7 +584,7 @@ body::after {
       <button class="btn-secondary" onclick="joinRoom()">ဝင်မည်</button>
     </div>
 
-    <div class="lobby-status" id="lobby-status">Firebase ချိတ်ဆက်နေသည်...</div>
+    <div class="lobby-status" id="lobby-status"></div>
   </div>
 </div>
 
@@ -785,6 +785,9 @@ let localVersion = 0;
 let huffPending = false;
 let huffPiecePos = null;
 
+// Guard flag — prevents doLeave() re-entry from Firebase callbacks after leaving
+let isLeaving = false;
+
 // Turn timer
 let timerInterval = null;
 let timerSeconds = 30;
@@ -794,7 +797,10 @@ let timerSeconds = 30;
 ════════════════════════════════════════════════════ */
 window.addEventListener('fbReady', () => {
   fbReady = true;
-  setLobbyStatus('🟢 ချိတ်ဆက်မှု အောင်မြင်သည်');
+  // Silently ready — no status message needed, user can just click buttons
+  // Clear the "connecting..." placeholder text
+  const el = document.getElementById('lobby-status');
+  if(el) el.textContent = '';
 });
 
 /* ════════════════════════════════════════════════════
@@ -802,7 +808,10 @@ window.addEventListener('fbReady', () => {
 ════════════════════════════════════════════════════ */
 function FB(){ return window._FB; }
 
-function setLobbyStatus(t){ document.getElementById('lobby-status').textContent=t; }
+function setLobbyStatus(t){
+  const el=document.getElementById('lobby-status');
+  if(el) el.textContent=t;
+}
 
 let _toastTimer=null;
 function toast(t){
@@ -826,11 +835,32 @@ function buildInitBoard(){
 
 /* ════════════════════════════════════════════════════
    GAME LOGIC — CAPTURE PATHS
+   ─────────────────────────────────────────────────
+   Myanmar Draughts King rules:
+   • King slides any number of squares along a diagonal (normal move)
+   • King captures: slides toward an opponent, jumps it, then LANDS on
+     ANY empty square beyond it along that same diagonal
+   • After landing, the King may immediately continue in ANY direction
+     to make further captures (multi-hop), EXCEPT it cannot re-jump a
+     piece already captured in this chain
+   • The captured piece is removed from the board for path purposes but
+     physically stays until the full turn ends (tracked via 'visited')
+   • Maximum-capture rule: must choose the path capturing most pieces
+   ─────────────────────────────────────────────────
+   Pawn rules (unchanged):
+   • Captures in all 4 diagonal directions (can capture backwards)
+   • Jumps exactly one square over an adjacent opponent to empty square
+   • Multi-hop allowed; maximum-capture mandatory
 ════════════════════════════════════════════════════ */
+
 /*
   getCapturePaths(r, c, turn, bs, visited)
-  Returns array of paths. Each path = array of steps {r,c,cap:[cr,cc]}
-  'visited' = Set of "cr,cc" strings already jumped in this chain (to avoid re-jump)
+  Returns array of paths. Each path = array of steps:
+    { r, c, cap:[cr,cc] }
+  where (r,c) = landing square, cap = jumped piece square
+
+  'visited' = Set of "cr,cc" strings of pieces already jumped in
+              this chain (prevents re-jumping same piece)
 */
 function getCapturePaths(r, c, turn, bs, visited){
   const piece = bs[r][c];
@@ -840,47 +870,86 @@ function getCapturePaths(r, c, turn, bs, visited){
 
   for(const [dr,dc] of dirs){
     if(king){
-      // King: scan diagonal, find first opponent, then collect all landing squares beyond it
-      let step=1, oppPos=null;
+      // ── KING CAPTURE ──────────────────────────────
+      // Phase 1: slide along diagonal to find the first opponent piece
+      let dist=1;
+      let oppR=-1, oppC=-1, foundOpp=false;
+
       while(true){
-        const nr=r+dr*step, nc=c+dc*step;
-        if(nr<0||nr>=8||nc<0||nc>=8) break;
-        const key=`${nr},${nc}`;
-        // Skip a square that was already captured in this chain
-        if(visited.has(key)){ step++; continue; }
-        if(bs[nr][nc]===EMPTY){
-          if(oppPos!==null){
-            // Landing square after opponent — recurse
-            const nb=bs.map(row=>[...row]);
-            nb[oppPos[0]][oppPos[1]]=EMPTY;
-            nb[r][c]=EMPTY;
-            nb[nr][nc]=piece;
-            const nv=new Set(visited); nv.add(`${oppPos[0]},${oppPos[1]}`);
-            const sub=getCapturePaths(nr,nc,turn,nb,nv);
-            if(sub.length===0) paths.push([{r:nr,c:nc,cap:[oppPos[0],oppPos[1]]}]);
-            else for(const sp of sub) paths.push([{r:nr,c:nc,cap:[oppPos[0],oppPos[1]]},...sp]);
+        const nr=r+dr*dist, nc=c+dc*dist;
+        if(nr<0||nr>=8||nc<0||nc>=8) break;          // off board
+        if(bs[nr][nc]!==EMPTY){
+          if(isOpp(bs[nr][nc],turn) && !visited.has(`${nr},${nc}`)){
+            // Found a jumpable opponent
+            oppR=nr; oppC=nc; foundOpp=true;
+            dist++;
+          } else {
+            break; // own piece, already-visited opp, or 2nd opp: blocked
           }
-          step++;
-        } else if(isOpp(bs[nr][nc],turn) && oppPos===null){
-          oppPos=[nr,nc]; step++;
-        } else {
-          break; // own piece or second opponent blocks
+          break; // stop scanning after hitting any piece
         }
+        dist++;
       }
+
+      if(!foundOpp) continue;
+
+      // Phase 2: collect all landing squares beyond the opponent
+      // King can land on any empty square past the opponent along this diagonal
+      let landDist=dist; // dist is now the index just past the opponent
+
+      // Build new board with opponent removed for recursive path finding
+      const nbBase=bs.map(row=>[...row]);
+      nbBase[oppR][oppC]=EMPTY; // opponent "virtually removed" for recursion
+      nbBase[r][c]=EMPTY;       // king lifts off
+
+      const nvBase=new Set(visited);
+      nvBase.add(`${oppR},${oppC}`); // mark as captured in this chain
+
+      while(true){
+        const lr=r+dr*landDist, lc=c+dc*landDist;
+        if(lr<0||lr>=8||lc<0||lc>=8) break;           // off board
+        if(bs[lr][lc]!==EMPTY) break;                  // blocked (use original bs for landing check)
+
+        // King lands here — place it, recurse for further captures
+        const nb=nbBase.map(row=>[...row]);
+        nb[lr][lc]=piece; // land
+
+        const sub=getCapturePaths(lr, lc, turn, nb, nvBase);
+
+        if(sub.length===0){
+          // No further captures from here — this is a terminal landing
+          paths.push([{r:lr, c:lc, cap:[oppR,oppC]}]);
+        } else {
+          // Further captures available — prepend this step to each sub-path
+          for(const sp of sub){
+            paths.push([{r:lr, c:lc, cap:[oppR,oppC]}, ...sp]);
+          }
+        }
+
+        landDist++;
+      }
+
     } else {
-      // Pawn: jump exactly one opponent diagonally (in any 4 directions — Myanmar rules allow capturing backwards)
-      const mr=r+dr, mc=c+dc;       // the opponent square
-      const lr=r+dr*2, lc=c+dc*2;   // landing square
+      // ── PAWN CAPTURE ──────────────────────────────
+      // Pawn jumps exactly one diagonal square in any of 4 directions
+      const mr=r+dr,   mc=c+dc;     // opponent square
+      const lr=r+dr*2, lc=c+dc*2;  // landing square
+
       if(lr<0||lr>=8||lc<0||lc>=8) continue;
       const key=`${mr},${mc}`;
       if(visited.has(key)) continue;
-      if(bs[mr][mc]!==EMPTY && isOpp(bs[mr][mc],turn) && bs[lr][lc]===EMPTY){
-        const nb=bs.map(row=>[...row]);
-        nb[mr][mc]=EMPTY; nb[r][c]=EMPTY; nb[lr][lc]=piece;
-        const nv=new Set(visited); nv.add(key);
-        const sub=getCapturePaths(lr,lc,turn,nb,nv);
-        if(sub.length===0) paths.push([{r:lr,c:lc,cap:[mr,mc]}]);
-        else for(const sp of sub) paths.push([{r:lr,c:lc,cap:[mr,mc]},...sp]);
+      if(bs[mr][mc]===EMPTY || !isOpp(bs[mr][mc],turn)) continue;
+      if(bs[lr][lc]!==EMPTY) continue;
+
+      const nb=bs.map(row=>[...row]);
+      nb[mr][mc]=EMPTY; nb[r][c]=EMPTY; nb[lr][lc]=piece;
+      const nv=new Set(visited); nv.add(key);
+
+      const sub=getCapturePaths(lr, lc, turn, nb, nv);
+      if(sub.length===0){
+        paths.push([{r:lr, c:lc, cap:[mr,mc]}]);
+      } else {
+        for(const sp of sub) paths.push([{r:lr, c:lc, cap:[mr,mc]}, ...sp]);
       }
     }
   }
@@ -1003,21 +1072,31 @@ function pickPiece(r,c){
   const maxLen=maxPathLen(allCaps);
 
   if(maxLen>0){
-    // Must capture — only pieces that have max-length paths are selectable
+    // Mandatory capture — must pick piece that has a max-length path
     const entry=allCaps.find(e=>e.r===r&&e.c===c);
-    if(!entry){ toast('⚔️ ဤကျောက်မှ ထိရောက်သောဖမ်းနိုင်မှုမရှိ — အများဆုံးဖမ်းနိုင်သောကျောက်ကို ရွေးပါ'); return; }
+    if(!entry){
+      toast('⚔️ ဤကျောက်က အများဆုံးဖမ်းနိုင်မှုမရှိ');
+      return;
+    }
+    // Only paths that equal the maximum capture count
     const maxPaths=entry.paths.filter(p=>p.length===maxLen);
     selCell={r,c};
-    // Gather unique first-step destinations
+
+    // Show all unique FIRST-STEP landing squares the player can choose
+    // (for King: multiple squares on same diagonal may be valid first landings)
     legalMoves=[];
     const seen=new Set();
     for(const path of maxPaths){
-      const {r:dr,c:dc}=path[0];
-      const key=`${dr},${dc}`;
+      const step0=path[0];
+      const key=`${step0.r},${step0.c}`;
       if(!seen.has(key)){
         seen.add(key);
-        legalMoves.push({r:dr,c:dc,isCapture:true,
-          paths:maxPaths.filter(p=>p[0].r===dr&&p[0].c===dc)});
+        // Attach all max-paths that start with this landing square
+        legalMoves.push({
+          r:step0.r, c:step0.c,
+          isCapture:true,
+          paths:maxPaths.filter(p=>p[0].r===step0.r&&p[0].c===step0.c)
+        });
       }
     }
   } else {
@@ -1033,17 +1112,18 @@ function pickPiece(r,c){
    EXECUTE MOVE
 ════════════════════════════════════════════════════ */
 function doMove(fr,fc,move){
-  // Did we have captures but chose a normal move? (Huff rule trigger)
+  // Check if we had captures available (needed for Huff rule on normal moves)
   const allCaps=getAllCaptures(currentTurn,board);
   const hadCaptures=allCaps.length>0;
 
   lastFrom={r:fr,c:fc};
 
   if(move.isCapture){
-    // Apply the first (and only — we auto-pick highest) path
+    // All paths in move.paths start with the same first landing square (fr→move.r,move.c).
+    // They may differ in subsequent steps. Pick longest (they should all be equal length
+    // by max-capture rule, so just take first).
     const path=move.paths[0];
     applyCapturePath(fr,fc,path);
-    // No huff trigger — we captured correctly
     clearSel();
     finishTurn(false, null);
   } else {
@@ -1055,7 +1135,7 @@ function doMove(fr,fc,move){
     promoteCheck(move.r,move.c);
     addLog(`${currentTurn===BLACK?'⬛':'⬜'} (${String.fromCharCode(65+fc)}${fr+1})→(${String.fromCharCode(65+move.c)}${move.r+1})`);
     clearSel();
-    // If we had captures available but made a normal move: opponent gets huff opportunity
+    // Missed capture → opponent may Huff
     finishTurn(hadCaptures, hadCaptures ? {r:fr,c:fc} : null);
   }
 }
@@ -1256,21 +1336,30 @@ window.joinRoom=async function(){
 };
 
 window.cancelRoom=function(){
-  if(roomId){const {db,ref,remove}=FB(); remove(ref(db,`rooms/${roomId}`));}
+  try{ if(typeof unsub==='function') unsub(); }catch(e){}
+  unsub=null;
+  if(roomId){
+    try{const {db,ref,remove}=FB(); remove(ref(db,`rooms/${roomId}`));}catch(e){}
+  }
   document.getElementById('waiting').classList.add('hidden');
   document.getElementById('lobby').classList.remove('hidden');
-  roomId='';
+  roomId=''; myColor=null; isHost=false;
 };
 
 /* ════════════════════════════════════════════════════
    FIREBASE LISTENERS
 ════════════════════════════════════════════════════ */
 function listenRoom(){
+  // Unsubscribe any existing listener first (prevent double-listener)
+  try{ if(typeof unsub==='function') unsub(); }catch(e){}
+  unsub=null;
+
   const {db,ref,onValue}=FB();
   const r=ref(db,`rooms/${roomId}`);
   unsub=onValue(r,snap=>{
     if(!snap.exists()){
-      if(!gameOver){toast('⚠️ Room ပျက်သွားသည်'); doLeave();}
+      // Only react if we're still in a valid game session
+      if(!gameOver && !isLeaving){ toast('⚠️ Room ပျက်သွားသည်'); doLeave(); }
       return;
     }
     const data=snap.val();
@@ -1320,6 +1409,9 @@ function listenRoom(){
 }
 
 function listenChat(){
+  try{ if(typeof unsubChat==='function') unsubChat(); }catch(e){}
+  unsubChat=null;
+
   const {db,ref,onValue}=FB();
   unsubChat=onValue(ref(db,`rooms/${roomId}/chat`),snap=>{
     if(!snap.exists()) return;
@@ -1394,7 +1486,10 @@ function loadState(st){
 /* ════════════════════════════════════════════════════
    WIN
 ════════════════════════════════════════════════════ */
+let winShown = false;
 function showWin(iWon, winnerColorName){
+  if(winShown) return; // prevent showing twice (endGame + applyRemoteState can both call)
+  winShown=true;
   document.getElementById('w-icon').textContent=iWon?'🏆':'😔';
   document.getElementById('w-title').textContent=iWon?'အနိုင်ရပြီ! 🎉':'ရှုံးနိမ့်သွားသည်';
   const oppName=document.getElementById('opp-name').textContent||'ပြိုင်ဘက်';
@@ -1406,15 +1501,35 @@ function showWin(iWon, winnerColorName){
 }
 
 window.doLeave=function(){
+  if(isLeaving) return;          // prevent re-entry
+  isLeaving=true;
   gameOver=true; stopTimer();
-  if(unsub) try{const{db,ref,off}=FB();off(ref(db,`rooms/${roomId}`),unsub);}catch(e){}
-  if(unsubChat) try{const{db,ref,off}=FB();off(ref(db,`rooms/${roomId}/chat`),unsubChat);}catch(e){}
-  if(isHost&&roomId){const{db,ref,remove}=FB();remove(ref(db,`rooms/${roomId}`));}
+
+  // Unsubscribe Firebase listeners FIRST — before any DOM changes
+  // Firebase v10: onValue() returns an unsubscribe function, NOT off(ref, cb)
+  try{ if(typeof unsub==='function') unsub(); }catch(e){}
+  try{ if(typeof unsubChat==='function') unsubChat(); }catch(e){}
+  unsub=null; unsubChat=null;
+
+  // Host removes the room
+  if(isHost && roomId){
+    try{ const{db,ref,remove}=FB(); remove(ref(db,`rooms/${roomId}`)); }catch(e){}
+  }
+
+  // Transition screens
   document.getElementById('win-overlay').classList.remove('show');
   document.getElementById('game-screen').classList.add('hidden');
   document.getElementById('lobby').classList.remove('hidden');
-  roomId=''; myColor=null; isHost=false;
-  gameLog=[]; capturedBy={[BLACK]:[],[WHITE]:[]};
+
+  // Reset all state
+  roomId=''; myColor=null; isHost=false; isLeaving=false;
+  board=[]; currentTurn=BLACK; selCell=null; legalMoves=[];
+  gameOver=false; gameLog=[]; capturedBy={[BLACK]:[],[WHITE]:[]};
+  localVersion=0; huffPending=false; huffPiecePos=null;
+  lastFrom=null; lastTo=null; winShown=false;
+
+  const lobbyEl=document.getElementById('lobby-status');
+  if(lobbyEl) lobbyEl.textContent='';
 };
 
 /* ════════════════════════════════════════════════════
